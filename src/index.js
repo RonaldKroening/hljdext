@@ -1,13 +1,14 @@
 import React from 'react';
-import { createRoot } from 'react-dom/client';
-import './index.css';
+import ReactDOM from 'react-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
 import App from './App';
+import './index.css';
 
-const container = document.getElementById('root');
-const root = createRoot(container);
-
-root.render(
+ReactDOM.render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>
+    <Router basename="/hljdext">
+      <App />
+    </Router>
+  </React.StrictMode>,
+  document.getElementById('root')
 );

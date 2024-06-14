@@ -327,7 +327,6 @@ const AboutPage = () => {
       const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
       console.log("Values: ",values);
 
-      return values;
 
       saveAs(new Blob([wbout], { type: 'application/octet-stream' }), `Modified_${fileName}.xlsx`);
       console.log("File saved!");
