@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/hljdext/static/css/main.e42a4ec6.css",
+    "main.js": "/hljdext/static/js/main.5fc35a72.js",
+    "index.html": "/hljdext/index.html",
+    "main.e42a4ec6.css.map": "/hljdext/static/css/main.e42a4ec6.css.map",
+    "main.5fc35a72.js.map": "/hljdext/static/js/main.5fc35a72.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e42a4ec6.css",
+    "static/js/main.5fc35a72.js"
+  ]
+}
