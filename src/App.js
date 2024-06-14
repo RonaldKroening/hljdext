@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import LargeContainer from './components/large-container';
 import SmallContainer from './components/small-container';
 import ChatboxContainer from './components/ChatboxContainer';
 import FileUpload from './components/FileUpload';
-import Table from './components/Table';
 import About from './AboutPage'; // Ensure you have the About component
 import './App.css'; // Add a CSS file for global styles
 
@@ -18,7 +17,7 @@ const App = () => {
   const [data, setData] = useState(null);
   const [chatboxes, setChatboxes] = useState([]);
   const [columnNames, setColumnNames] = useState([]);
-  const [selectedColumns, setSelectedColumns] = useState([]); // Ensure this is initialized as an array
+  const [selectedColumns, setSelectedColumns] = useState([]);
   const [queries, setQueries] = useState({});
   const navigate = useNavigate();
 
@@ -34,8 +33,7 @@ const App = () => {
       setData(data);
 
       const worksheet = workbook.Sheets[firstSheetName];
-      let columnNamesArray = [];
-      columnNamesArray = columnNamesArray.concat(XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0]);
+      const columnNamesArray = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0];
       const newChatboxes = columnNamesArray.map((columnName, index) => ({
         id: index + 1,
         name: columnName
@@ -74,7 +72,7 @@ const App = () => {
   };
 
   const getCellValue = (sheet, row, col) => {
-    const cellAddress = XLSX.utils.encode_cell({ r: row - 1, c: col - 1 }); // Convert to 0-indexed
+    const cellAddress = XLSX.utils.encode_cell({ r: row - 1, c: col - 1 });
     const cell = sheet[cellAddress];
     return cell ? cell.v : undefined;
   };
@@ -83,7 +81,6 @@ const App = () => {
     navigate('/about', { state: { queries, data } });
   };
 
-  // Effect to combine dropdown and checkbox selections into queries
   useEffect(() => {
     setQueries((prevQueries) => ({
       ...prevQueries,
