@@ -10,6 +10,9 @@ import About from './AboutPage'; // Ensure you have the About component
 import './App.css'; // Add a CSS file for global styles
 
 const App = () => {
+  useEffect(() => {
+    document.title = 'HEXSUT';
+  }, []);
   const [sheet, setSheet] = useState(null);
   const [data, setData] = useState(null);
   const [chatboxes, setChatboxes] = useState([]);
@@ -87,7 +90,7 @@ const App = () => {
 
   return (
     <div className="App">
-      <h1>HEXUT</h1>
+      <h1>HEXSUT</h1>
       <LargeContainer id="large-container-1" text1="Upload File" text2="Click or Drag & Drop the Excel Spreadsheet to get started.">
         <FileUpload id="file-upload" onFilesSelected={handleFileUpload} />
       </LargeContainer>
