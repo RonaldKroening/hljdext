@@ -1,0 +1,54 @@
+.cont-hold-top-container {
+    display: flex;
+    border: 1px solid #000;
+    max-width: 70%;
+    
+}
+.cont-hold-box1 {
+    background-color: #8B0000;
+    width: 35%;
+    height: 50px;
+    align-items: center;
+}
+.cont-hold-box2 {
+    background-color: #D3A6A6;
+    width: 65%;
+    height: 50px;
+    align-items: center;
+}
+h2{
+    color: white;
+    align-items: center;
+}
+p{
+    color: white;
+    align-items: center;
+}
+.cont-hold-main-container {
+    height: 300px;
+    border: 1px solid #000;
+    overflow-y: scroll;
+    max-width: 70%;
+    display: flex;
+    margin-top: -1px;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    justify-self: center;
+    justify-items: center;
+    align-self: center;
+    align-content: center;
+}
+.cont-hold-root-container{
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    justify-self: center;
+    justify-items: center;
+    align-self: center;
+    align-content: center;
+    margin-bottom: 2.5%;
+}
+
+  
+  
