@@ -13,12 +13,13 @@ const App = () => {
   useEffect(() => {
     document.title = 'HEXSUT';
   }, []);
+
   const [sheet, setSheet] = useState(null);
   const [data, setData] = useState(null);
   const [chatboxes, setChatboxes] = useState([]);
   const [columnNames, setColumnNames] = useState([]);
   const [selectedColumns, setSelectedColumns] = useState([]); // Ensure this is initialized as an array
-  const [queries, setQueries] = useState({}); 
+  const [queries, setQueries] = useState({});
   const navigate = useNavigate();
 
   const handleFileUpload = (files) => {
@@ -71,11 +72,13 @@ const App = () => {
       return newSelected;
     });
   };
+
   const getCellValue = (sheet, row, col) => {
     const cellAddress = XLSX.utils.encode_cell({ r: row - 1, c: col - 1 }); // Convert to 0-indexed
     const cell = sheet[cellAddress];
     return cell ? cell.v : undefined;
   };
+
   const segue = () => {
     navigate('/about', { state: { queries, data } });
   };
