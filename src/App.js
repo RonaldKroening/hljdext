@@ -16,7 +16,7 @@ const App = () => {
   const [sheet, setSheet] = useState(null);
   const [data, setData] = useState(null);
   const [chatboxes, setChatboxes] = useState([]);
-  const [columnNames, setColumnNames] = useState([]);
+  const [columnNames, setColumnNames] = useState([" "]);
   const [selectedColumns, setSelectedColumns] = useState([]); // Ensure this is initialized as an array
   const [queries, setQueries] = useState({});
   const navigate = useNavigate();
@@ -41,6 +41,7 @@ const App = () => {
 
       setChatboxes(newChatboxes);
       setColumnNames(columnNamesArray);
+      // localStorage.clear();
     };
     reader.readAsArrayBuffer(file);
   };

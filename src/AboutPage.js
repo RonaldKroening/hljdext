@@ -10,6 +10,7 @@ import ChatboxContainer from './components/ChatboxContainer';
 
 const { saveAs } = require('file-saver');
 
+
 function extractIdentifier(url) {
   const regex = /\/alma\/(\d+)\/catalog/;
   const match = url.match(regex);
@@ -274,7 +275,7 @@ const AboutPage = () => {
             }
           }
         }
-        return value;
+  
 
         if (value === "") {
           var valid_res = [];
@@ -326,7 +327,8 @@ const AboutPage = () => {
 
       const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
       console.log("Values: ",values);
-
+      var text = generate_statistics();
+      document.getElementById("stats-results").innerText = text;
 
       saveAs(new Blob([wbout], { type: 'application/octet-stream' }), `Modified_${fileName}.xlsx`);
       console.log("File saved!");
@@ -344,126 +346,45 @@ const AboutPage = () => {
       <LargeContainer text1={"Results"} text2={"View Table with Results from Search"}>
         <Table sheet={sheet}></Table>
       </LargeContainer>
-      
+      <LargeContainer text1={"Statistics"} text2={"View Information on Results from Search"}>
+        <p id="stats-results"></p>
+      </LargeContainer>
     </div>
   );
 
 };
 
-async function search_by_isbn(isbn) {
-  var all_json = [];
-  const url_1 = `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}`;
-  const url_2 = `https://api.lib.harvard.edu/v2/items.json?title=${isbn}&facets=name,resourceType`;
+function generate_statistics(values){
+    var counts = [0,0,0];
+    var text = "";
+    console.log("gen stats: ",values);
 
-  for (var url of [url_1, url_2]) {
-    console.log("trying url: ",url);
-    try {
-      const response = await fetch(url);
-      const jsonText = await response.text();
-      let json = JSON.parse(jsonText);
-    
-      const nf = parseInt(json['pagination']['numFound'], 10);
-      if (nf > 0) {
-        if (nf === 1) {
-          let jso = json['items']['mods'];
-          let test_h = new HOBJECT(jso);
-          test_h.process(jso);
-          if (test_h.check_identifier('isbn',isbn.toString())) {
-            return [test_h];
-          }
-        } else if (nf > 1) {
-          for (var jso of json['items']['mods']) {
-            let test_h = new HOBJECT(jso);
-            test_h.process(jso);
-            if (test_h.isbn === isbn) {
-              return [test_h];
-            }
-          }
+    for(const val in values){
+        console.log("value360: ",value);
+        const value = values[val];
+        console.log("val: ",value);
+        if(value.includes("Red")){
+            counts[0]= counts[0]+1;
+        }else if(value.includes("Yellow")){
+            counts[1] = counts[1]+1;
+        }else if(value.includes("Green")){
+            counts[2] = counts[2]+1;
         }
-      }
-    } catch (error) {
-      console.error('Error:', error);
     }
-  }
-  return null;
+    console.log("counts: ",counts);
+    var total = values.length;
+
+    text += "• Red: " + counts[0]/total*100 + "%\n";
+    text += "• Yellow: " + counts[1]/total*100 + "%\n";
+    text += "• Green: " + counts[2]/total*100 + "%\n";
+    text += "• Total: " + total + "\n";
+
+    return text;
+
+
+
 }
 
-async function search_by_author(author) {
-  var all_json = [];
-  const query = author.toString().replace(/ /g, "%20");
-  const url_1 = `https://api.lib.harvard.edu/v2/items.json?identifier=${query}`;
-  const url_2 = `https://api.lib.harvard.edu/v2/items.json?title=${query}&facets=name,resourceType`;
-
-  for (var url of [url_1, url_2]) {
-    try {
-      const response = await fetch(url);
-      const jsonText = await response.text();
-      let json = JSON.parse(jsonText);
-
-      const nf = parseInt(json['pagination']['numFound'], 10);
-      if (nf > 0) {
-        if (nf === 1) {
-          let jso = json['items']['mods'];
-          let test_h = new HOBJECT(jso);
-          test_h.process(jso);
-          console.log(test_h.author);
-          if (test_h.check_author(author)) {
-            return [test_h];
-          }
-        } else if (nf > 1) {
-          for (var jso of json['items']['mods']) {
-            let test_h = new HOBJECT(jso);
-            test_h.process(jso);
-
-            if (test_h.check_creators(author)) {
-              all_json.push(test_h);
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  }
-  return all_json.length ? all_json : null;
-}
-
-async function search_by_query(query) {
-  var all_json = [];
-  const url_1 = `https://api.lib.harvard.edu/v2/items.json?identifier=${query}`;
-  const url_2 = `https://api.lib.harvard.edu/v2/items.json?title=${query}&facets=name,resourceType`;
-
-  for (var url of [url_1, url_2]) {
-    try {
-      const response = await fetch(url);
-      const jsonText = await response.text();
-      let json = JSON.parse(jsonText);
-
-      const nf = parseInt(json['pagination']['numFound'], 10);
-      if (nf > 0) {
-        if (nf === 1) {
-          let jso = json['items']['mods'];
-          let test_h = new HOBJECT(jso);
-          test_h.process(jso);
-          if (query in test_h.asList()) {
-            all_json.push(test_h);
-          }
-        } else if (nf > 1) {
-          for (var jso of json['items']['mods']) {
-            let test_h = new HOBJECT(jso);
-            test_h.process(jso);
-            if (query in test_h.asList()) {
-              all_json.push(test_h);
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  }
-  return all_json.length ? all_json : null;
-}
 
 const stopwords = [
   'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours',
@@ -503,46 +424,52 @@ function splitSentence(sentence) {
     return [part1, part2, part3];
   }
 
-async function search_by_title(titl) {
-  var all_json = [];
-  console.log("Old title: ",titl);
-  var title = cleanSentence(titl);
-  title = splitSentence(title);
-  console.log("Subparts: ",title);
-
-  for (var word of title) {
-    console.log("word: ",word);
-    const url_1 = `https://api.lib.harvard.edu/v2/items.json?identifier=${word}`;
-    const url_2 = `https://api.lib.harvard.edu/v2/items.json?title=${word}&facets=name,resourceType`;
-
-    for (var url of [url_1, url_2]) {
+  async function fetchFromApiOrCache(url) {
+    const cachedResponse = localStorage.getItem(url);
+    if (cachedResponse) {
+      console.log("Using cached response for URL:", url);
+      return JSON.parse(cachedResponse);
+    }
+  
+    const response = await fetch(url);
+    const jsonText = await response.text();
+    const json = JSON.parse(jsonText);
+    localStorage.setItem(url, JSON.stringify(json));
+    return json;
+  }
+  
+  async function search_by_isbn(isbn) {
+    if (!isbn) {
+      console.log("No ISBN provided");
+      return null;
+    }
+    
+    var all_json = [];
+    const urls = [
+      `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}`,
+      `https://api.lib.harvard.edu/v2/items.json?title=${isbn}&facets=name,resourceType`
+    ];
+  
+    for (const url of urls) {
+      console.log("ISBN Check URL:", url);
       try {
-        const response = await fetch(url);
-        const jsonText = await response.text();
-        let json = JSON.parse(jsonText);
-
+        const json = await fetchFromApiOrCache(url);
         const nf = parseInt(json['pagination']['numFound'], 10);
-        console.log("Found ",nf);
         if (nf > 0) {
           if (nf === 1) {
-            console.log("Here with ",json['items']['mods']);
             let jso = json['items']['mods'];
             let test_h = new HOBJECT(jso);
             test_h.process(jso);
-            for (var obj_title of test_h.titles) {
-                if (obj_title.split(" ")[0] === titl.split(" ")[0]) {
-                    all_json.push(test_h);
-                }
+            if (test_h.check_identifier('isbn', isbn.toString())) {
+              return [test_h];
             }
           } else if (nf > 1) {
             for (var jso of json['items']['mods']) {
               let test_h = new HOBJECT(jso);
               test_h.process(jso);
-                for (var obj_title of test_h.titles) {
-                    if (obj_title.split(" ")[0] === titl.split(" ")[0]) {
-                        all_json.push(test_h);
-                    }
-                }
+              if (test_h.isbn === isbn) {
+                return [test_h];
+              }
             }
           }
         }
@@ -550,8 +477,147 @@ async function search_by_title(titl) {
         console.error('Error:', error);
       }
     }
+    return null;
   }
-  return all_json.length ? all_json : null;
-}
+  
+  async function search_by_author(author) {
+    if (!author) {
+      console.log("No author provided");
+      return null;
+    }
+  
+    var all_json = [];
+    const query = author.toString().replace(/ /g, "%20");
+    const urls = [
+      `https://api.lib.harvard.edu/v2/items.json?identifier=${query}`,
+      `https://api.lib.harvard.edu/v2/items.json?title=${query}&facets=name,resourceType`
+    ];
+  
+    for (const url of urls) {
+      try {
+        const json = await fetchFromApiOrCache(url);
+        const nf = parseInt(json['pagination']['numFound'], 10);
+        if (nf > 0) {
+          if (nf === 1) {
+            let jso = json['items']['mods'];
+            let test_h = new HOBJECT(jso);
+            test_h.process(jso);
+            console.log(test_h.author);
+            if (test_h.check_author(author)) {
+              return [test_h];
+            }
+          } else if (nf > 1) {
+            for (var jso of json['items']['mods']) {
+              let test_h = new HOBJECT(jso);
+              test_h.process(jso);
+              if (test_h.check_creators(author)) {
+                all_json.push(test_h);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+    return all_json.length ? all_json : null;
+  }
+  
+  async function search_by_query(query) {
+    if (!query) {
+      console.log("No query provided");
+      return null;
+    }
+  
+    var all_json = [];
+    const urls = [
+      `https://api.lib.harvard.edu/v2/items.json?identifier=${query}`,
+      `https://api.lib.harvard.edu/v2/items.json?title=${query}&facets=name,resourceType`
+    ];
+  
+    for (const url of urls) {
+      try {
+        const json = await fetchFromApiOrCache(url);
+        const nf = parseInt(json['pagination']['numFound'], 10);
+        if (nf > 0) {
+          if (nf === 1) {
+            let jso = json['items']['mods'];
+            let test_h = new HOBJECT(jso);
+            test_h.process(jso);
+            if (query in test_h.asList()) {
+              all_json.push(test_h);
+            }
+          } else if (nf > 1) {
+            for (var jso of json['items']['mods']) {
+              let test_h = new HOBJECT(jso);
+              test_h.process(jso);
+              if (query in test_h.asList()) {
+                all_json.push(test_h);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+    return all_json.length ? all_json : null;
+  }
+  
+  async function search_by_title(titl) {
+    if (!titl) {
+      console.log("No title provided");
+      return null;
+    }
+  
+    var all_json = [];
+    console.log("Old title:", titl);
+    var title = cleanSentence(titl);
+    title = splitSentence(title);
+    console.log("Subparts:", title);
+  
+    for (var word of title) {
+      console.log("Word:", word);
+      const urls = [
+        `https://api.lib.harvard.edu/v2/items.json?identifier=${word}`,
+        `https://api.lib.harvard.edu/v2/items.json?title=${word}&facets=name,resourceType`
+      ];
+  
+      for (const url of urls) {
+        try {
+          const json = await fetchFromApiOrCache(url);
+          const nf = parseInt(json['pagination']['numFound'], 10);
+          console.log("Found", nf);
+          if (nf > 0) {
+            if (nf === 1) {
+              console.log("Here with", json['items']['mods']);
+              let jso = json['items']['mods'];
+              let test_h = new HOBJECT(jso);
+              test_h.process(jso);
+              for (var obj_title of test_h.titles) {
+                if (obj_title.split(" ")[0] === titl.split(" ")[0]) {
+                  all_json.push(test_h);
+                }
+              }
+            } else if (nf > 1) {
+              for (var jso of json['items']['mods']) {
+                let test_h = new HOBJECT(jso);
+                test_h.process(jso);
+                for (var obj_title of test_h.titles) {
+                  if (obj_title.split(" ")[0] === titl.split(" ")[0]) {
+                    all_json.push(test_h);
+                  }
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error:', error);
+        }
+      }
+    }
+    return all_json.length ? all_json : null;
+  }
+  
 
 export default AboutPage;
