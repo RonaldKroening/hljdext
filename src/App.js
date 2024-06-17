@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
 import LargeContainer from './components/large-container';
 import SmallContainer from './components/small-container';
 import ChatboxContainer from './components/ChatboxContainer';
@@ -17,7 +17,7 @@ const App = () => {
   const [data, setData] = useState(null);
   const [chatboxes, setChatboxes] = useState([]);
   const [columnNames, setColumnNames] = useState([]);
-  const [selectedColumns, setSelectedColumns] = useState([]);
+  const [selectedColumns, setSelectedColumns] = useState([]); // Ensure this is initialized as an array
   const [queries, setQueries] = useState({});
   const navigate = useNavigate();
 
@@ -132,13 +132,10 @@ const App = () => {
   );
 };
 
-const MainApp = () => (
-  <Router>
-    <Routes>
-      <Route path="/" element={<App />} />
-      <Route path="/about" element={<About />} />
-    </Routes>
-  </Router>
+const  MainApp = () => (
+  <Routes>
+    <Route path="/" element={<App />} />
+    <Route path="/about" element={<About />} />
+  </Routes>
 );
-
 export default MainApp;
