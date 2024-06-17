@@ -327,7 +327,7 @@ const AboutPage = () => {
 
       const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
       console.log("Values: ",values);
-      var text = generate_statistics();
+      var text = generate_statistics(values);
       document.getElementById("stats-results").innerText = text;
 
       saveAs(new Blob([wbout], { type: 'application/octet-stream' }), `Modified_${fileName}.xlsx`);
@@ -372,7 +372,7 @@ function generate_statistics(values){
         }
     }
     console.log("counts: ",counts);
-    var total = counts.length;
+    var total = values.length;
 
     text += "• Red: " + counts[0]/total*100 + "%\n";
     text += "• Yellow: " + counts[1]/total*100 + "%\n";
