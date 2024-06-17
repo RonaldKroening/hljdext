@@ -34,14 +34,15 @@ const App = () => {
 
       const worksheet = workbook.Sheets[firstSheetName];
       var columnNamesArray = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0];
-      columnNamesArray.unshift("None");
-
+          
+      
       const newChatboxes = columnNamesArray.map((columnName, index) => ({
         id: index + 1,
         name: columnName
       }));
 
       setChatboxes(newChatboxes);
+      var ncla = columnNamesArray.unshift("None");
       setColumnNames(columnNamesArray);
       // localStorage.clear();
     };
