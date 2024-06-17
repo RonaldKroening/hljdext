@@ -372,7 +372,7 @@ function generate_statistics(values){
         }
     }
     console.log("counts: ",counts);
-    var total = values.length;
+    var total = counts.length;
 
     text += "• Red: " + counts[0]/total*100 + "%\n";
     text += "• Yellow: " + counts[1]/total*100 + "%\n";
