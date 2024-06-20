@@ -1,0 +1,85 @@
+.popup-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Translucent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.color-Group{
+  align-items: center;
+  align-self: center;
+  text-align: center;
+}
+h3{
+  text-align: center;
+  color: white;
+}
+.infoButton{
+  margin-left: 30%;
+  width: 100px;
+  height: 30px;
+  margin-top: 10px;
+}
+table {
+  margin: 0 auto; /* center the table horizontally */
+  border-collapse: collapse;
+  border: 0;
+}
+td {
+  padding: 20px; /* add some padding to the cells */
+  color: white;
+  font-size: 18px;
+  width: 100px;
+  
+}
+.info-button {
+  margin-left: 70px; 
+  width: 100px;
+  height: 35px;
+  border-radius:12px;
+  border:0px;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+}
+.titleTable{
+  font-weight: bold;
+  font-family:Helvetica;
+  font-size: 18px;
+  margin-top: 10%;
+}
+tr{
+  margin-bottom: 100px;
+}
+
+.popup {
+  background: rgb(138, 92, 92);
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  max-height: 70%;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.popup-inner {
+  text-align: center;
+}
+
+.progress-bar {
+  width: 100%;
+  background-color: #f3f3f3;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.progress {
+  height: 10px;
+  background-color: #4caf50;
+  transition: width 0.1s ease-in-out;
+}

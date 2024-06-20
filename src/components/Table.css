@@ -1,0 +1,22 @@
+.table-container {
+  overflow: auto;
+  max-height: 400px;
+  max-width: 600px;
+}
+
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.styled-table th,
+.styled-table td {
+  padding: 5px;
+  border: 1px solid #dddddd;
+  text-align: left;
+}
+
+.styled-table th {
+  background-color: #f2f2f2;
+}

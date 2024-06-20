@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>SearchView</title>
+  <style>
+    body {
+        background: linear-gradient(to bottom, 
+          #FF0033,
+          #FF0033 20%, 
+          #FF3300 40%
+        );
+        height: 100vh;
+        margin: 0;
+      }
+    h1{
+    	text-align:center;
+        color: white;
+    	font-family:Helvetica;
+    	font-weight:bold;
+        font-size: 64px;
+    }
+    h2{
+    	text-align:center;
+    	font-family:Helvetica;
+        color: white;
+        margin-bottom: 5%;
+        font-size: 36px;
+    }
+    .progress-bar {
+      width: 40%;
+      height: 20px;
+      margin: 0 auto; /* center the table horizontally */
+      background-color: #f0f0f0;
+      margin-bottom: 5%;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar-inner {
+      height: 100%;
+      background-color: #4CAF50;
+      border-radius: 10px;
+    }
+    .color-Group{
+        align-items: center;
+        align-self: center;
+        text-align: center;
+    }
+    h3{
+        text-align: center;
+        color: white;
+    }
+    .infoButton{
+        margin-left: 30%;
+        width: 100px;
+        height: 30px;
+        margin-top: 10px;
+    }
+    table {
+        margin: 0 auto; /* center the table horizontally */
+        border-collapse: collapse;
+        border: 0;
+      }
+      td {
+        padding: 20px; /* add some padding to the cells */
+        color: white;
+        font-size: 24px;
+        
+    }
+     .info-button {
+        margin-left: 100px; 
+        width: 100px;
+        height: 35px;
+        border-radius:12px;
+        border:0px;
+        color: white;
+        font-weight: bold;
+        font-size: 18px;
+      }
+      .titleTable{
+        font-weight: bold;
+        font-family:Helvetica;
+        font-size: 18px;
+        margin-top: 10%;
+      }
+      tr{
+        margin-bottom: 100px;
+      }
+
+  </style>
+</head>
+<body>
+ 	<h1>Searching</h1>
+ 	<h2 id="searchNums">XX of XX</h2>
+ 	<div class="progress-bar">
+  		<div class="progress-bar-inner" id="progress-bar-inner" style="width: 60%;"></div>
+ 	</div>
+     <table>
+        <tr>
+          <td id="redInfo" class="titleTable">Red: </td>
+          <td><button style="background-color:crimson"class="info-button">Info</button></td>
+        </tr>
+        <tr>
+          <td id="yellowInfo" class="titleTable">Yellow: </td>
+          <td><button style="background-color:gold" class="info-button">Info</button></td>
+        </tr>
+        <tr>
+          <td id="greenInfo" class="titleTable">Green: </td>
+          <td><button style="background-color:green"class="info-button">Info</button></td>
+        </tr>
+      </table>
+  <script>
+    let progressBar = document.getElementById('progress-bar-inner');
+    let progress = 0;
+    let maxProgress = 100;
+    var values = {
+        "Red" : 0,
+        "Yellow" : 0,
+        "Green" : 0,
+    }
+   
+    function updateProgress(searchVal) {
+        progress += 1;
+        document.getElementById("searchNums").innerText = (progress.toString() + " of " + maxProgress.toString());
+        progressBar.style.width = (progress / maxProgress) * 100 + '%';
+        
+        if (progress < maxProgress) {
+          setTimeout(function() {
+            updateProgress(searchVal);
+          }, 1000);
+          values[searchVal] = values[searchVal] + 1;
+        } else {
+          console.log("Finished Searching");
+        }
+        
+        document.getElementById("redInfo").innerText = "Red: " + values["Red"].toString();
+        document.getElementById("yellowInfo").innerText = "Yellow: " + values['Yellow'].toString();
+        document.getElementById("greenInfo").innerText = "Green: " + values['Green'].toString();
+      }
+
+    updateProgress("Red");
+  </script>
+</body>
+
+</html>

@@ -5,6 +5,19 @@
   justify-items: center;
   align-self: center;
   align-content: center;
+  margin: 0 auto;
+}
+.largeHolderCont{
+  margin: 0 auto;
+  text-align: center;
+  justify-content: center;
+  justify-self: center;
+  justify-items: center;
+  align-self: center;
+  align-content: center;
+  align-items: center;
+  align-content: center;
+  align-self: center;
 }
 .searchButton {
   width: 20%;

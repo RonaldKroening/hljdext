@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import LargeContainer from './components/large-container';
 import SmallContainer from './components/small-container';
 import ChatboxContainer from './components/ChatboxContainer';
 import FileUpload from './components/FileUpload';
-import About from './AboutPage'; // Ensure you have the About component
-import './App.css'; // Add a CSS file for global styles
+import Popup from './Popup.js';
+import './App.css';
+import { Modal } from 'react-bootstrap';
 
 const App = () => {
   useEffect(() => {
@@ -17,9 +18,9 @@ const App = () => {
   const [data, setData] = useState(null);
   const [chatboxes, setChatboxes] = useState([]);
   const [columnNames, setColumnNames] = useState([" "]);
-  const [selectedColumns, setSelectedColumns] = useState([]); // Ensure this is initialized as an array
+  const [selectedColumns, setSelectedColumns] = useState([]);
   const [queries, setQueries] = useState({});
-  const navigate = useNavigate();
+  const [showPopup, setShowPopup] = useState(false); // State for showing the popup
 
   const handleFileUpload = (files) => {
     const file = files[0];
@@ -34,17 +35,15 @@ const App = () => {
 
       const worksheet = workbook.Sheets[firstSheetName];
       var columnNamesArray = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0];
-          
-      
+
       const newChatboxes = columnNamesArray.map((columnName, index) => ({
         id: index + 1,
         name: columnName
       }));
 
       setChatboxes(newChatboxes);
-      var ncla = columnNamesArray.unshift("None");
+      columnNamesArray.unshift("None");
       setColumnNames(columnNamesArray);
-      // localStorage.clear();
     };
     reader.readAsArrayBuffer(file);
   };
@@ -55,7 +54,8 @@ const App = () => {
       newSelected[columnId] = value;
       setQueries({
         ...queries,
-        dropdowns: newSelected
+        dropdowns: newSelected,
+        allSelected: newSelected
       });
       return newSelected;
     });
@@ -75,22 +75,14 @@ const App = () => {
     });
   };
 
-  const getCellValue = (sheet, row, col) => {
-    const cellAddress = XLSX.utils.encode_cell({ r: row - 1, c: col - 1 });
-    const cell = sheet[cellAddress];
-    return cell ? cell.v : undefined;
-  };
-
   const segue = () => {
-    navigate('/about', { state: { queries, data } });
+    console.log("pressed. queries: ", queries);
+    setShowPopup(true); // Show the popup
   };
 
-  useEffect(() => {
-    setQueries((prevQueries) => ({
-      ...prevQueries,
-      allSelected: [...new Set([...selectedColumns])]
-    }));
-  }, [selectedColumns]);
+  const handleClosePopup = () => {
+    setShowPopup(false); // Close the popup
+  };
 
   return (
     <div className="App">
@@ -132,14 +124,15 @@ const App = () => {
         />
       </LargeContainer>
       <button className="searchButton" onClick={segue}>Search</button>
+      {showPopup && <Popup sheet={sheet} queries={queries} onClose={handleClosePopup} />} {/* Conditionally render the popup */}
     </div>
   );
 };
 
-const  MainApp = () => (
+const MainApp = () => (
   <Routes>
     <Route path="/" element={<App />} />
-    <Route path="/about" element={<About />} />
   </Routes>
 );
+
 export default MainApp;
