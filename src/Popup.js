@@ -23,7 +23,7 @@ const Popup = ({ sheet, queries, onClose, workbook }) => {
 
   useEffect(() => {
     const performSearch = async () => {
-      if (count <= maxCount) {
+      if (let_continue) {
         const searchValue = await utils.search_one_item(sheet, queries, count + 1);
         console.log(searchValue);
         resList.push(searchValue);
@@ -49,6 +49,7 @@ const Popup = ({ sheet, queries, onClose, workbook }) => {
           saveAs(new Blob([wbout], { type: 'application/octet-stream' }), `Modified_${file.name}`);
           console.log('File saved!');
           clearInterval(intervalId);
+          let_continue=false;
         }
       } 
     };
