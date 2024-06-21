@@ -247,45 +247,88 @@ export function createColumn(name, sheet, values = []) {
   });
 }
 
-
 async function search_by_isbn(isbn) {
   var all_json = [];
-  const url_1 = `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}`;
-  const url_2 = `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}&facets=name,resourceType`;
-  const url_3 = `https://api.lib.harvard.edu/v2/items.json?q=${isbn}`;
+  if (isbn.toString().includes(";")) {
+    for (var singleIsbn of isbn.split(";")) {
+      const urls = [
+        `https://api.lib.harvard.edu/v2/items.json?identifier=${singleIsbn}`,
+        `https://api.lib.harvard.edu/v2/items.json?identifier=${singleIsbn}&facets=name,resourceType`,
+        `https://api.lib.harvard.edu/v2/items.json?q=${singleIsbn}`
+      ];
 
-  for (var url of [url_1,url_2,url_3]) { //Yes, this is improper, but has option to add urls
-    console.log("trying url: ",url);
-    try {
-      const response = await fetch(url);
-      const jsonText = await response.text();
-      let json = JSON.parse(jsonText);
-    
-      const nf = parseInt(json['pagination']['numFound'], 10);
-      if (nf > 0) {
-        if (nf === 1) {
-          let jso = json['items']['mods'];
-          let test_h = new HOBJECT(jso);
-          test_h.process(jso);
-          if (test_h.check_identifier('isbn',isbn.toString())) {
-            return [test_h];
+      for (var url of urls) {
+        console.log("trying url: ", url);
+        try {
+          const response = await fetch(url);
+          const jsonText = await response.text();
+          let json = JSON.parse(jsonText);
+
+          const nf = parseInt(json['pagination']['numFound'], 10);
+          if (nf > 0) {
+            if (nf === 1) {
+              let jso = json['items']['mods'];
+              let test_h = new HOBJECT(jso);
+              test_h.process(jso);
+              if (test_h.check_identifier('isbn', singleIsbn.toString())) {
+                return [test_h];
+              }
+            } else if (nf > 1) {
+              for (var jso of json['items']['mods']) {
+                let test_h = new HOBJECT(jso);
+                test_h.process(jso);
+                if (test_h.isbn === singleIsbn) {
+                  return [test_h];
+                }
+              }
+            }
           }
-        } else if (nf > 1) {
-          for (var jso of json['items']['mods']) {
+        } catch (error) {
+          console.error('Error:', error);
+        }
+      }
+    }
+  } else {
+    const urls = [
+      `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}`,
+      `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}&facets=name,resourceType`,
+      `https://api.lib.harvard.edu/v2/items.json?q=${isbn}`
+    ];
+
+    for (var url of urls) {
+      console.log("trying url: ", url);
+      try {
+        const response = await fetch(url);
+        const jsonText = await response.text();
+        let json = JSON.parse(jsonText);
+
+        const nf = parseInt(json['pagination']['numFound'], 10);
+        if (nf > 0) {
+          if (nf === 1) {
+            let jso = json['items']['mods'];
             let test_h = new HOBJECT(jso);
             test_h.process(jso);
-            if (test_h.isbn === isbn) {
+            if (test_h.check_identifier('isbn', isbn.toString())) {
               return [test_h];
+            }
+          } else if (nf > 1) {
+            for (var jso of json['items']['mods']) {
+              let test_h = new HOBJECT(jso);
+              test_h.process(jso);
+              if (test_h.isbn === isbn) {
+                return [test_h];
+              }
             }
           }
         }
+      } catch (error) {
+        console.error('Error:', error);
       }
-    } catch (error) {
-      console.error('Error:', error);
     }
   }
   return null;
 }
+
 
 export async function search_one_item(sheet,queries, r){
     

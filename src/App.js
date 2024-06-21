@@ -78,8 +78,13 @@ const App = () => {
   };
 
   const segue = () => {
-    console.log("pressed. queries: ", queries);
-    setShowPopup(true); // Show the popup
+    if(queries['allSelected'] != undefined){
+      console.log("pressed. queries: ", queries);
+      setShowPopup(true); // Show the popup
+    }else{
+      alert("Please select at least one column before searching.");
+    }
+    
   };
 
   const handleClosePopup = () => {
