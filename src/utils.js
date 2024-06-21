@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import HOBJECT from './HOBJect.js';
+// const fs = require('fs').promises;
 
 function extractIdentifier(url) {
   const regex = /\/alma\/(\d+)\/catalog/;
@@ -66,7 +67,52 @@ function format_word(word) {
   }
   return new_word;
 }
+let callCache = {};
 
+// Function to load cache from tempCache.txt and convert to JSON
+async function loadCache() {
+    const input = document.getElementById('fileInput');
+    const file = input.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+        try {
+            callCache = JSON.parse(event.target.result);
+            console.log('Cache loaded successfully:', callCache);
+        } catch (error) {
+            console.error('Error parsing JSON:', error);
+        }
+    };
+
+    if (file) {
+        reader.readAsText(file);
+    } else {
+        console.log('No file selected');
+    }
+}
+
+// Function to save a call to the cache
+function saveCall(url, json) {
+    callCache[url] = json;
+}
+
+// Function to write the cache to tempCache.txt
+function saveCacheToFile() {
+    const blob = new Blob([JSON.stringify(callCache, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tempCache.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Function to check if a URL is in the cache and return associated JSON
+function checkCache(url) {
+    return callCache.hasOwnProperty(url) ? callCache[url] : null;
+}
 function format_title(title) {
   var new_title = "";
 
@@ -93,7 +139,7 @@ function overrideCol(sheet, colIndex, columnName, values) {
   sheet['!ref'] = XLSX.utils.encode_range(range);
 }
 
-function moveColumnToFirst(sheet, colName) {
+export function moveColumnToFirst(sheet, colName) {
   const range = XLSX.utils.decode_range(sheet['!ref']);
   const columnNames = XLSX.utils.sheet_to_json(sheet, { header: 1 })[0];
   const colIndex = columnNames.indexOf(colName);
@@ -179,7 +225,7 @@ function colIndex(sheet, columnName) {
   return -1;
 }
 
-function createColumn(name, sheet, values = []) {
+export function createColumn(name, sheet, values = []) {
   const range = XLSX.utils.decode_range(sheet['!ref']);
   const columnIndex = range.e.c + 1;
 
@@ -205,9 +251,10 @@ function createColumn(name, sheet, values = []) {
 async function search_by_isbn(isbn) {
   var all_json = [];
   const url_1 = `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}`;
-  const url_2 = `https://api.lib.harvard.edu/v2/items.json?title=${isbn}&facets=name,resourceType`;
+  const url_2 = `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}&facets=name,resourceType`;
+  const url_3 = `http://webservices.lib.harvard.edu/rest/v3/hollis/{record_format}/isbn/${isbn}`;
 
-  for (var url of [url_2]) { //Yes, this is improper, but has option to add urls
+  for (var url of [url_1,url_2,url_3]) { //Yes, this is improper, but has option to add urls
     console.log("trying url: ",url);
     try {
       const response = await fetch(url);
@@ -436,7 +483,7 @@ const stopwords = [
   'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down',
   'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here',
   'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more',
-  'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so',
+   'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so',
   'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should', 'now'
 ];
 
@@ -462,7 +509,31 @@ function splitSentence(sentence) {
   
     return [part1, part2, part3];
 }
+var cache = {};
+async function save_cache(url,jso){
+  loadCache(url).then(urlData => {
+    if (urlData == false) {
+        cache[url] = jso;
+    } 
+  }).catch(error => {
+      console.error(`Error loading cache:`, error);
+  });
+}
 
+
+async function save_and_return(url){
+  //TODO: Load json file and check if url is a key in it. if it isn't run the 
+  var urlInFile = false;
+  var json = null;
+  if(urlInFile == false){
+    const response = await fetch(url);
+    const jsonText = await response.text();
+    json = JSON.parse(jsonText);
+  }else{
+    json = cache[url];
+  }
+  return json;
+}
 async function search_by_title(titl) {
   var all_json = [];
   console.log("Old title: ",titl);
@@ -472,14 +543,12 @@ async function search_by_title(titl) {
 
   for (var word of title) {
     console.log("word: ",word);
-    const url_1 = `https://api.lib.harvard.edu/v2/items.json?identifier=${word}`;
+    const url_1 = `https://api.lib.harvard.edu/v2/items.json?title=${word}`;
     const url_2 = `https://api.lib.harvard.edu/v2/items.json?title=${word}&facets=name,resourceType`;
 
     for (var url of [url_2]) { //Yes, this is improper, but has option to add urls
       try {
-        const response = await fetch(url);
-        const jsonText = await response.text();
-        let json = JSON.parse(jsonText);
+        let json = await save_and_return(url);
 
         const nf = parseInt(json['pagination']['numFound'], 10);
         console.log("Found ",nf);

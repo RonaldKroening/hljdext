@@ -2,45 +2,62 @@ import React, { useState, useEffect } from 'react';
 import './Popup.css'; // Import CSS for styling if necessary
 import * as XLSX from 'xlsx';
 import * as utils from './utils.js';
+import { saveAs } from 'file-saver';
+import { Route, Routes } from 'react-router-dom';
+import LargeContainer from './components/large-container';
+import SmallContainer from './components/small-container';
+import ChatboxContainer from './components/ChatboxContainer';
+import FileUpload from './components/FileUpload';
+
 var searchResults = {};
-const Popup = ({ sheet, queries, onClose }) => {
+var resList = [];
+var maxCount = 258;
+var let_continue = true;
+const Popup = ({ sheet, queries, onClose, workbook }) => {
   const [count, setCount] = useState(0);
   const range = XLSX.utils.decode_range(sheet['!ref']);
-  let maxCount = range.e.r;
+  maxCount = range.e.r;
   let intervalId;
-  
-  const resList = [];
+
+  const file = { name: 'example.xlsx' }; // Define the file object
 
   useEffect(() => {
     const performSearch = async () => {
-      const searchValue = await utils.search_one_item(sheet, queries, count + 1);
-      console.log(searchValue);
-      resList.push(searchValue);
+      if (count <= maxCount) {
+        const searchValue = await utils.search_one_item(sheet, queries, count + 1);
+        console.log(searchValue);
+        resList.push(searchValue);
 
-      try {
-        if (searchValue.includes('Red')) {
-          updateResults('Red', searchValue);
-        } else if (searchValue.includes('Green')) {
-          updateResults('Green', searchValue);
-        } else if (searchValue.includes('Yellow')) {
-          updateResults('Yellow', searchValue);
+        try {
+          if (searchValue.includes('Red')) {
+            updateResults('Red', searchValue);
+          } else if (searchValue.includes('Green')) {
+            updateResults('Green', searchValue);
+          } else if (searchValue.includes('Yellow')) {
+            updateResults('Yellow', searchValue);
+          }
+        } catch {
+          console.error('Error found with includes: ', searchValue);
         }
-      } catch {
-        console.error('Error found with includes: ', searchValue);
-      }
 
-      setCount((prevCount) => prevCount + 1);
+        setCount((prevCount) => prevCount + 1);
 
-      if (count >= maxCount) {
-        clearInterval(intervalId);
-      }
+        if (count == maxCount) {
+          utils.createColumn('HOLLIS Search', sheet, resList);
+          utils.moveColumnToFirst(sheet, 'HOLLIS Search');
+          const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+          saveAs(new Blob([wbout], { type: 'application/octet-stream' }), `Modified_${file.name}`);
+          console.log('File saved!');
+          clearInterval(intervalId);
+        }
+      } 
     };
 
     intervalId = setInterval(() => {
       document.getElementById('numSearched').innerHTML = `${count} of ${maxCount}`;
       console.log('queries: ', queries);
       performSearch();
-    }, 3000); // Adjust the interval time as needed
+    }, 50);
 
     return () => {
       if (intervalId) {
@@ -51,14 +68,14 @@ const Popup = ({ sheet, queries, onClose }) => {
 
   const updateResults = (key, value) => {
     var list = [];
-    if(key in searchResults){
-      list= searchResults[key];
+    if (key in searchResults) {
+      list = searchResults[key];
     }
     list.push(value);
     console.log(searchResults);
     searchResults[key] = list;
-    console.log("id: "+(key+"count")+" search res "+searchResults[key].length.toString());
-    document.getElementById(key+'count').innerHTML = `${key} : ${searchResults[key].length}`;
+    console.log('id: ' + (key + 'count') + ' search res ' + searchResults[key].length.toString());
+    document.getElementById(key + 'count').innerHTML = `${key} : ${searchResults[key].length}`;
   };
 
   const handleDoubleClick = () => {
@@ -80,15 +97,27 @@ const Popup = ({ sheet, queries, onClose }) => {
             <tbody>
               <tr>
                 <td id="Redcount" className="titleTable">Red:</td>
-                <td><button style={{ backgroundColor: 'crimson' }} className="info-button">Info</button></td>
+                <td>
+                  <button style={{ backgroundColor: 'crimson' }} className="info-button">
+                    Info
+                  </button>
+                </td>
               </tr>
               <tr>
                 <td id="Yellowcount" className="titleTable">Yellow:</td>
-                <td><button style={{ backgroundColor: 'gold' }} className="info-button">Info</button></td>
+                <td>
+                  <button style={{ backgroundColor: 'gold' }} className="info-button">
+                    Info
+                  </button>
+                </td>
               </tr>
               <tr>
                 <td id="Greencount" className="titleTable">Green:</td>
-                <td><button style={{ backgroundColor: 'green' }} className="info-button">Info</button></td>
+                <td>
+                  <button style={{ backgroundColor: 'green' }} className="info-button">
+                    Info
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>

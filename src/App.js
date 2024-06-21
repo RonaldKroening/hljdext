@@ -20,6 +20,7 @@ const App = () => {
   const [columnNames, setColumnNames] = useState([" "]);
   const [selectedColumns, setSelectedColumns] = useState([]);
   const [queries, setQueries] = useState({});
+  const [workbook,setWorkbook] = useState(null);
   const [showPopup, setShowPopup] = useState(false); // State for showing the popup
 
   const handleFileUpload = (files) => {
@@ -28,6 +29,7 @@ const App = () => {
     reader.onload = (e) => {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
+      setWorkbook(workbook);
       const firstSheetName = workbook.SheetNames[0];
       const firstSheet = workbook.Sheets[firstSheetName];
       setSheet(firstSheet);
@@ -124,7 +126,7 @@ const App = () => {
         />
       </LargeContainer>
       <button className="searchButton" onClick={segue}>Search</button>
-      {showPopup && <Popup sheet={sheet} queries={queries} onClose={handleClosePopup} />} {/* Conditionally render the popup */}
+      {showPopup && <Popup sheet={sheet} queries={queries} onClose={handleClosePopup} workbook={workbook}/>} {/* Conditionally render the popup */}
     </div>
   );
 };
