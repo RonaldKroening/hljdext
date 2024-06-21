@@ -13,13 +13,14 @@ var searchResults = {};
 var resList = [];
 var maxCount = 258;
 var let_continue = true;
+var speed = 1000;
 const Popup = ({ sheet, queries, onClose, workbook }) => {
   const [count, setCount] = useState(0);
   const range = XLSX.utils.decode_range(sheet['!ref']);
-  maxCount = range.e.r;
+  maxCount = 10;
+  speed = speed+(speed * queries['allSelected'].length);
   let intervalId;
 
-  const file = { name: 'example.xlsx' }; // Define the file object
 
   useEffect(() => {
     const performSearch = async () => {
@@ -58,7 +59,7 @@ const Popup = ({ sheet, queries, onClose, workbook }) => {
       document.getElementById('numSearched').innerHTML = `${count} of ${maxCount}`;
       console.log('queries: ', queries);
       performSearch();
-    }, 50);
+    }, speed);
 
     return () => {
       if (intervalId) {
