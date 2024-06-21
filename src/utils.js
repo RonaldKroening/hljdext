@@ -252,7 +252,7 @@ async function search_by_isbn(isbn) {
   var all_json = [];
   const url_1 = `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}`;
   const url_2 = `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}&facets=name,resourceType`;
-  const url_3 = `http://webservices.lib.harvard.edu/rest/v3/hollis/{record_format}/isbn/${isbn}`;
+  const url_3 = `https://api.lib.harvard.edu/v2/items.json?q=${isbn}`;
 
   for (var url of [url_1,url_2,url_3]) { //Yes, this is improper, but has option to add urls
     console.log("trying url: ",url);
