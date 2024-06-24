@@ -446,7 +446,7 @@ async function search_by_author(author) {
   var all_json = [];
   const query = author.toString().replace(/ /g, "%20");
   const url_1 = `https://api.lib.harvard.edu/v2/items.json?identifier=${query}`;
-  const url_2 = `https://api.lib.harvard.edu/v2/items.json?title=${query}&facets=name,resourceType`;
+  const url_2 = `https://api.lib.harvard.edu/v2/items.json?q=${query}`;
 
   for (var url of [url_2]) { //Yes, this is improper, but has option to add urls
     try {
@@ -483,7 +483,7 @@ async function search_by_author(author) {
 async function search_by_query(query) {
   var all_json = [];
   const url_1 = `https://api.lib.harvard.edu/v2/items.json?identifier=${query}`;
-  const url_2 = `https://api.lib.harvard.edu/v2/items.json?title=${query}&facets=name,resourceType`;
+  const url_2 = `https://api.lib.harvard.edu/v2/items.json?q=${query}`;
 
   for (var url of [url_2]) { //Yes, this is improper, but has option to add urls
     try {
@@ -589,7 +589,7 @@ async function search_by_title(titl) {
   for (var word of title) {
     console.log("word: ",word);
     const url_1 = `https://api.lib.harvard.edu/v2/items.json?title=${word}`;
-    const url_2 = `https://api.lib.harvard.edu/v2/items.json?title=${word}&facets=name,resourceType`;
+    const url_2 = `https://api.lib.harvard.edu/v2/items.json?q=${word}`;
 
     for (var url of [url_2]) { //Yes, this is improper, but has option to add urls
       try {
