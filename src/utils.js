@@ -253,7 +253,6 @@ async function search_by_isbn(isbn) {
     for (var singleIsbn of isbn.split(";")) {
       const urls = [
         `https://api.lib.harvard.edu/v2/items.json?identifier=${singleIsbn}`,
-        `https://api.lib.harvard.edu/v2/items.json?identifier=${singleIsbn}&facets=name,resourceType`,
         `https://api.lib.harvard.edu/v2/items.json?q=${singleIsbn}`
       ];
 
@@ -329,10 +328,11 @@ async function search_by_isbn(isbn) {
   return null;
 }
 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-export async function search_one_item(sheet,queries, r){
-    
-
+export async function search_one_item(sheet, queries, r) {
     let isbn_column = colIndex(sheet, queries['dropdowns'][0]);
     console.log("Before title index");
     let title_column = colIndex(sheet, queries['dropdowns'][1]);
@@ -340,12 +340,10 @@ export async function search_one_item(sheet,queries, r){
     console.log("after all before remaining");
     let remaining_columns = notcols(queries['allSelected'], queries['dropdowns']);
     
-    console.log("ISBN: ",isbn_column,"\n");
-    console.log("Title: ",title_column,"\n");
-    console.log("Author: ",author_column,"\n");
-    console.log("Remaining: ",remaining_columns,"\n");
-
-
+    console.log("ISBN: ", isbn_column, "\n");
+    console.log("Title: ", title_column, "\n");
+    console.log("Author: ", author_column, "\n");
+    console.log("Remaining: ", remaining_columns, "\n");
 
     for (var i in remaining_columns) {
       remaining_columns[i] = colIndex(sheet, remaining_columns[i]);
@@ -357,22 +355,24 @@ export async function search_one_item(sheet,queries, r){
     let title_cell = getCell(sheet, r, title_column);
     let author_cell = getCell(sheet, r, author_column);
     var value = "";
-    console.log("ISBN: ",isbn_cell);
-    console.log("Title: ",title_cell);
-    console.log("Author: ",author_cell);
+    console.log("ISBN: ", isbn_cell);
+    console.log("Title: ", title_cell);
+    console.log("Author: ", author_cell);
 
     if (isbn_cell) {
+      await delay(3000);
       let isbn_res = await search_by_isbn(isbn_cell);
       console.log("ISBN Results", isbn_res);
       if (isbn_res) {
         value = "Red: Hollis ID No. " + isbn_res[0].hollisID;
       }
     }
-    
+
     if (value === "") {
       if (title_cell) {
+        await delay(3000);
         title_cell = format_title(title_cell);
-        console.log("Title: ",title_cell);
+        console.log("Title: ", title_cell);
         let title_res = await search_by_title(title_cell);
         if (title_res) {
           if (title_res.length > 1) {
@@ -382,12 +382,12 @@ export async function search_one_item(sheet,queries, r){
           }
         }
       }
-        console.log("Done with Title",value);
+      console.log("Done with Title", value);
     }
-    
 
     if (value === "") {
       if (author_cell) {
+        await delay(3000);
         let author_res = await search_by_author(author_cell);
         if (author_res) {
           if (author_res.length > 1) {
@@ -404,6 +404,7 @@ export async function search_one_item(sheet,queries, r){
       for (var col of remaining_columns) {
         let query_cell = getCell(sheet, r, col);
         if (query_cell) {
+          await delay(3000);
           let query_res = await search_by_query(query_cell);
           if (query_res) {
             if (query_res.length === 1) {
@@ -439,6 +440,7 @@ export async function search_one_item(sheet,queries, r){
     }
     return value;
 }
+
 
 async function search_by_author(author) {
   var all_json = [];

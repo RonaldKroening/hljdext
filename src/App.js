@@ -20,11 +20,13 @@ const App = () => {
   const [columnNames, setColumnNames] = useState([" "]);
   const [selectedColumns, setSelectedColumns] = useState([]);
   const [queries, setQueries] = useState({});
+  const [fileInput,setfileInput] = useState(null);
   const [workbook,setWorkbook] = useState(null);
   const [showPopup, setShowPopup] = useState(false); // State for showing the popup
 
   const handleFileUpload = (files) => {
     const file = files[0];
+    setfileInput(file);
     const reader = new FileReader();
     reader.onload = (e) => {
       const data = new Uint8Array(e.target.result);
@@ -131,7 +133,7 @@ const App = () => {
         />
       </LargeContainer>
       <button className="searchButton" onClick={segue}>Search</button>
-      {showPopup && <Popup sheet={sheet} queries={queries} onClose={handleClosePopup} workbook={workbook}/>} {/* Conditionally render the popup */}
+      {showPopup && <Popup sheet={sheet} queries={queries} onClose={handleClosePopup} workbook={workbook} fileInput={fileInput}/>} {/* Conditionally render the popup */}
     </div>
   );
 };

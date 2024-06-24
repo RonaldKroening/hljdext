@@ -15,7 +15,8 @@ var maxCount = 258;
 var let_continue = true;
 var speed = 1000;
 const Popup = ({ sheet, queries, onClose, workbook }) => {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(1);
+  const [fileInput,setfileInput] = useState(null);
   const range = XLSX.utils.decode_range(sheet['!ref']);
   maxCount = 10;
   speed = speed+(speed * queries['allSelected'].length);
@@ -44,6 +45,7 @@ const Popup = ({ sheet, queries, onClose, workbook }) => {
         setCount((prevCount) => prevCount + 1);
 
         if (count == maxCount) {
+          const file = fileInput.files[0];
           utils.createColumn('HOLLIS Search', sheet, resList);
           utils.moveColumnToFirst(sheet, 'HOLLIS Search');
           const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
