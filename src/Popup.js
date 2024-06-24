@@ -13,7 +13,7 @@ var searchResults = {};
 var resList = [];
 var maxCount = 258;
 var let_continue = true;
-var speed = 1000;
+var speed = 100;
 const Popup = ({ sheet, queries, onClose, workbook }) => {
   const [count, setCount] = useState(1);
   const [fileInput,setfileInput] = useState(null);
