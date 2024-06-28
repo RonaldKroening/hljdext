@@ -1,12 +1,12 @@
 .App {
+  /* display: flex; */
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  justify-content: center;
-  justify-self: center;
-  justify-items: center;
-  align-self: center;
-  align-content: center;
-  margin: 0 auto;
+  margin: 0px;
+  padding: 0px;
 }
+
 .largeHolderCont{
   margin: 0 auto;
   text-align: center;

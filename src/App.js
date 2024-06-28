@@ -9,6 +9,47 @@ import Popup from './Popup.js';
 import './App.css';
 import { Modal } from 'react-bootstrap';
 
+function testMode(sheet, num_test) {
+  const range = XLSX.utils.decode_range(sheet['!ref']);
+  const totalRows = range.e.r;
+  const totalCols = range.e.c + 1;
+  const selectedRows = new Set();
+
+  // Ensure we don't select more rows than available
+  num_test = Math.min(num_test, totalRows); // Adjust to include header row
+
+  // Generate random unique row indices
+  while (selectedRows.size < num_test) {
+    const randomRow = Math.floor(Math.random() * (totalRows - 1)) + 1; // from row 2 to the end
+    selectedRows.add(randomRow);
+  }
+
+  // Prepare new sheet data
+  const newSheetData = [];
+
+  // Add header row
+  const headerRow = [];
+  for (let col = 0; col < totalCols; col++) {
+    const cell = sheet[XLSX.utils.encode_cell({ r: 0, c: col })]; // header row is 0
+    headerRow.push(cell ? cell.v : null);
+  }
+  newSheetData.push(headerRow);
+
+  // Add selected rows
+  selectedRows.forEach(row => {
+    const rowData = [];
+    for (let col = 0; col < totalCols; col++) {
+      const cell = sheet[XLSX.utils.encode_cell({ r: row, c: col })];
+      rowData.push(cell ? cell.v : null);
+    }
+    newSheetData.push(rowData);
+  });
+
+  // Create new sheet
+  const newSheet = XLSX.utils.aoa_to_sheet(newSheetData);
+  return newSheet;
+}
+const test = false;
 const App = () => {
   useEffect(() => {
     document.title = 'HEXSUT';
@@ -33,7 +74,12 @@ const App = () => {
       const workbook = XLSX.read(data, { type: 'array' });
       setWorkbook(workbook);
       const firstSheetName = workbook.SheetNames[0];
-      const firstSheet = workbook.Sheets[firstSheetName];
+      setfileInput(file);
+      var firstSheet = workbook.Sheets[firstSheetName];
+      if(test){
+        firstSheet = testMode(firstSheet,100);
+      }
+      console.log("First sheet: ",firstSheet);
       setSheet(firstSheet);
       setData(data);
 
@@ -80,6 +126,7 @@ const App = () => {
   };
 
   const segue = () => {
+    console.log(sheet);
     if(queries['allSelected'] != undefined){
       console.log("pressed. queries: ", queries);
       setShowPopup(true); // Show the popup

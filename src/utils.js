@@ -1,6 +1,5 @@
 import * as XLSX from 'xlsx';
 import HOBJECT from './HOBJect.js';
-// const fs = require('fs').promises;
 
 function extractIdentifier(url) {
   const regex = /\/alma\/(\d+)\/catalog/;
@@ -67,52 +66,7 @@ function format_word(word) {
   }
   return new_word;
 }
-let callCache = {};
 
-// Function to load cache from tempCache.txt and convert to JSON
-async function loadCache() {
-    const input = document.getElementById('fileInput');
-    const file = input.files[0];
-    const reader = new FileReader();
-
-    reader.onload = function(event) {
-        try {
-            callCache = JSON.parse(event.target.result);
-            console.log('Cache loaded successfully:', callCache);
-        } catch (error) {
-            console.error('Error parsing JSON:', error);
-        }
-    };
-
-    if (file) {
-        reader.readAsText(file);
-    } else {
-        console.log('No file selected');
-    }
-}
-
-// Function to save a call to the cache
-function saveCall(url, json) {
-    callCache[url] = json;
-}
-
-// Function to write the cache to tempCache.txt
-function saveCacheToFile() {
-    const blob = new Blob([JSON.stringify(callCache, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'tempCache.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-// Function to check if a URL is in the cache and return associated JSON
-function checkCache(url) {
-    return callCache.hasOwnProperty(url) ? callCache[url] : null;
-}
 function format_title(title) {
   var new_title = "";
 
@@ -194,7 +148,6 @@ export function moveColumnToFirst(sheet, colName) {
 
 function notcols(a, b) {
   var c = [];
-  console.log("a ",a," and b ",b);
   for (var element of a) {
     if (b.includes(element) === false) {
       c.push(element);
@@ -203,7 +156,7 @@ function notcols(a, b) {
   return c;
 }
 
-function getCell(sheet, row, column) {
+export function getCell(sheet, row, column) {
   const cell_address = XLSX.utils.encode_cell({ c: column, r: row });
   const cell = sheet[cell_address];
   if (cell) {
@@ -212,13 +165,12 @@ function getCell(sheet, row, column) {
   return null;
 }
 
-function colIndex(sheet, columnName) {
+export function colIndex(sheet, columnName) {
   const range = XLSX.utils.decode_range(sheet['!ref']);
   for (let col = range.s.c; col <= range.e.c; col++) {
     const cellAddress = XLSX.utils.encode_cell({ c: col, r: range.s.r });
     const cell = sheet[cellAddress];
     if (cell && cell.v === columnName) {
-      console.log("Found column name: ",cell.v);
       return col;
     }
   }
@@ -248,16 +200,24 @@ export function createColumn(name, sheet, values = []) {
 }
 
 async function search_by_isbn(isbn) {
+  // console.log("Checking ISBN: ",isbn);
+  if (!isbn || isbn.trim() === "") {
+    // console.log("ISBN Not found. Returning.");
+    return null;
+  }
+  if(isbn.includes("[ISSN]")){
+    isbn = isbn.replace("[ISSN]","");
+  }
+  
   var all_json = [];
   if (isbn.toString().includes(";")) {
     for (var singleIsbn of isbn.split(";")) {
+
       const urls = [
-        `https://api.lib.harvard.edu/v2/items.json?identifier=${singleIsbn}`,
         `https://api.lib.harvard.edu/v2/items.json?q=${singleIsbn}`
       ];
-
+//        `https://api.lib.harvard.edu/v2/items.json?identifier=${singleIsbn}`,
       for (var url of urls) {
-        console.log("trying url: ", url);
         try {
           const response = await fetch(url);
           const jsonText = await response.text();
@@ -269,7 +229,7 @@ async function search_by_isbn(isbn) {
               let jso = json['items']['mods'];
               let test_h = new HOBJECT(jso);
               test_h.process(jso);
-              if (test_h.check_identifier('isbn', singleIsbn.toString())) {
+              if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
                 return [test_h];
               }
             } else if (nf > 1) {
@@ -290,12 +250,10 @@ async function search_by_isbn(isbn) {
   } else {
     const urls = [
       `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}`,
-      `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}&facets=name,resourceType`,
       `https://api.lib.harvard.edu/v2/items.json?q=${isbn}`
     ];
 
     for (var url of urls) {
-      console.log("trying url: ", url);
       try {
         const response = await fetch(url);
         const jsonText = await response.text();
@@ -314,14 +272,14 @@ async function search_by_isbn(isbn) {
             for (var jso of json['items']['mods']) {
               let test_h = new HOBJECT(jso);
               test_h.process(jso);
-              if (test_h.isbn === isbn) {
+              if (test_h.isbn === isbn || test_h.asList().includes(isbn)) {
                 return [test_h];
               }
             }
           }
         }
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error:', error," with ISBN");
       }
     }
   }
@@ -334,16 +292,10 @@ function delay(ms) {
 
 export async function search_one_item(sheet, queries, r) {
     let isbn_column = colIndex(sheet, queries['dropdowns'][0]);
-    console.log("Before title index");
+    // console.log("ISBN Col in new sheet: ",isbn_column);
     let title_column = colIndex(sheet, queries['dropdowns'][1]);
     let author_column = colIndex(sheet, queries['dropdowns'][2]);
-    console.log("after all before remaining");
     let remaining_columns = notcols(queries['allSelected'], queries['dropdowns']);
-    
-    console.log("ISBN: ", isbn_column, "\n");
-    console.log("Title: ", title_column, "\n");
-    console.log("Author: ", author_column, "\n");
-    console.log("Remaining: ", remaining_columns, "\n");
 
     for (var i in remaining_columns) {
       remaining_columns[i] = colIndex(sheet, remaining_columns[i]);
@@ -354,15 +306,12 @@ export async function search_one_item(sheet, queries, r) {
     let isbn_cell = getCell(sheet, r, isbn_column);
     let title_cell = getCell(sheet, r, title_column);
     let author_cell = getCell(sheet, r, author_column);
+    // console.log("ISBN Cells: ",isbn_cell);
     var value = "";
-    console.log("ISBN: ", isbn_cell);
-    console.log("Title: ", title_cell);
-    console.log("Author: ", author_cell);
 
     if (isbn_cell) {
-      await delay(3000);
+      await delay(1100);
       let isbn_res = await search_by_isbn(isbn_cell);
-      console.log("ISBN Results", isbn_res);
       if (isbn_res) {
         value = "Red: Hollis ID No. " + isbn_res[0].hollisID;
       }
@@ -370,9 +319,7 @@ export async function search_one_item(sheet, queries, r) {
 
     if (value === "") {
       if (title_cell) {
-        await delay(3000);
         title_cell = format_title(title_cell);
-        console.log("Title: ", title_cell);
         let title_res = await search_by_title(title_cell);
         if (title_res) {
           if (title_res.length > 1) {
@@ -382,12 +329,10 @@ export async function search_one_item(sheet, queries, r) {
           }
         }
       }
-      console.log("Done with Title", value);
     }
 
     if (value === "") {
       if (author_cell) {
-        await delay(3000);
         let author_res = await search_by_author(author_cell);
         if (author_res) {
           if (author_res.length > 1) {
@@ -404,7 +349,6 @@ export async function search_one_item(sheet, queries, r) {
       for (var col of remaining_columns) {
         let query_cell = getCell(sheet, r, col);
         if (query_cell) {
-          await delay(3000);
           let query_res = await search_by_query(query_cell);
           if (query_res) {
             if (query_res.length === 1) {
@@ -438,17 +382,39 @@ export async function search_one_item(sheet, queries, r) {
     if (value === "") {
       value = "Green: No matches found.";
     }
+    const valStr = isbn_cell + " " + title_cell + " "+author_cell;
+    // if(value.includes("Green")){
+    //   // console.log("No match found for "+valStr);
+    // }
+    console.log("Value for  "+valStr+ ": "+value);
+    
     return value;
 }
 
+// function openHollisSearch(query) {
+//     // Step 1: Wait for 1 second
+//     setTimeout(() => {
+//         // Step 2: Construct the URL with the query
+//         const url = `https://hollis.harvard.edu/primo-explore/search?query=any,contains,${query}&tab=books&search_scope=default_scope&vid=HVD2&lang=en_US&offset=0`;
+        
+//         // Step 3: Open the URL in a new tab
+//         window.open(url, '_blank');
+        
+//         // Step 4: Wait for 2 seconds (not needed in this case, as the tab opens immediately)
+//     }, 1000);
+// }
 
 async function search_by_author(author) {
+  if (!author || author.trim() === "") {
+    return null;
+  }
+  
   var all_json = [];
   const query = author.toString().replace(/ /g, "%20");
   const url_1 = `https://api.lib.harvard.edu/v2/items.json?identifier=${query}`;
   const url_2 = `https://api.lib.harvard.edu/v2/items.json?q=${query}`;
 
-  for (var url of [url_2]) { //Yes, this is improper, but has option to add urls
+  for (var url of [url_2]) { // Yes, this is improper, but has option to add urls
     try {
       const response = await fetch(url);
       const jsonText = await response.text();
@@ -457,35 +423,47 @@ async function search_by_author(author) {
       const nf = parseInt(json['pagination']['numFound'], 10);
       if (nf > 0) {
         if (nf === 1) {
-          let jso = json['items']['mods'];
-          let test_h = new HOBJECT(jso);
-          test_h.process(jso);
-          if (test_h.check_author(author)) {
-            return [test_h];
-          }
-        } else if (nf > 1) {
-          for (var jso of json['items']['mods']) {
+          try {
+            let jso = json['items']['mods'];
             let test_h = new HOBJECT(jso);
             test_h.process(jso);
             if (test_h.check_author(author)) {
-              all_json.push(test_h);
+              return [test_h];
+            }
+          } catch {
+            let jk = 1;
+          }
+        } else if (nf > 1) {
+          for (var jso of json['items']['mods']) {
+            try {
+              let test_h = new HOBJECT(jso);
+              test_h.process(jso);
+              if (test_h.check_author(author)) {
+                all_json.push(test_h);
+              }
+            } catch {
+              let jk = 1;
             }
           }
         }
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', error," with Author");
     }
   }
   return all_json.length ? all_json : null;
 }
 
 async function search_by_query(query) {
+  if (!query || query.trim() === "") {
+    return null;
+  }
+
   var all_json = [];
   const url_1 = `https://api.lib.harvard.edu/v2/items.json?identifier=${query}`;
   const url_2 = `https://api.lib.harvard.edu/v2/items.json?q=${query}`;
 
-  for (var url of [url_2]) { //Yes, this is improper, but has option to add urls
+  for (var url of [url_2]) { // Yes, this is improper, but has option to add urls
     try {
       const response = await fetch(url);
       const jsonText = await response.text();
@@ -511,7 +489,7 @@ async function search_by_query(query) {
         }
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', error," with query");
     }
   }
   return all_json.length ? all_json : null;
@@ -528,7 +506,7 @@ const stopwords = [
   'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down',
   'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here',
   'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more',
-   'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so',
+  'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so',
   'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should', 'now'
 ];
 
@@ -536,93 +514,83 @@ function cleanSentence(sentence) {
   return sentence
     .toLowerCase()
     .split(' ')
-    .filter(word => (!stopwords.includes(word) && word.length > 3))
+    .filter(word => /^[a-z]+$/.test(word) && word.length > 3)
     .join(' ');
 }
 
+
 function splitSentence(sentence) {
-    const words = sentence.split(' ');
-    const n = words.length;
-  
-    const part1Length = Math.ceil(n / 3);
-    const part2Length = Math.ceil((n - part1Length) / 2);
-    const part3Length = n - part1Length - part2Length;
-  
-    const part1 = words.slice(0, part1Length).join(' ');
-    const part2 = words.slice(part1Length, part1Length + part2Length).join(' ');
-    const part3 = words.slice(part1Length + part2Length).join(' ');
-  
-    return [part1, part2, part3];
-}
-var cache = {};
-async function save_cache(url,jso){
-  loadCache(url).then(urlData => {
-    if (urlData == false) {
-        cache[url] = jso;
-    } 
-  }).catch(error => {
-      console.error(`Error loading cache:`, error);
-  });
+  const words = sentence.split(' ');
+  const n = words.length;
+
+  const part1Length = Math.ceil(n / 3);
+  const part2Length = Math.ceil((n - part1Length) / 2);
+  const part3Length = n - part1Length - part2Length;
+
+  const part1 = words.slice(0, part1Length).join(' ');
+  const part2 = words.slice(part1Length, part1Length + part2Length).join(' ');
+  const part3 = words.slice(part1Length + part2Length).join(' ');
+
+  return [part1, part2, part3];
 }
 
-
-async function save_and_return(url){
-  //TODO: Load json file and check if url is a key in it. if it isn't run the 
-  var urlInFile = false;
-  var json = null;
-  if(urlInFile == false){
-    const response = await fetch(url);
-    const jsonText = await response.text();
-    json = JSON.parse(jsonText);
-  }else{
-    json = cache[url];
+function best_amt(words, n) {
+  if (n >= words.length) {
+    return words;
   }
-  return json;
+  var new_word_list = words.sort(
+    function (a, b) {
+      return b.length - a.length;
+    }
+  );
+  return new_word_list.slice(0, n);
 }
+
 async function search_by_title(titl) {
+  if (!titl || titl.trim() === "" || titl == "" || titl.length == 0) {
+    return null;
+  }
+
   var all_json = [];
-  console.log("Old title: ",titl);
   var title = cleanSentence(titl);
-  title = splitSentence(title);
-  console.log("Subparts: ",title);
 
-  for (var word of title) {
-    console.log("word: ",word);
-    const url_1 = `https://api.lib.harvard.edu/v2/items.json?title=${word}`;
-    const url_2 = `https://api.lib.harvard.edu/v2/items.json?q=${word}`;
+  if(title.length === 0 || title === ""){
+    title = titl;
+  }
+  const url_1 = `https://api.lib.harvard.edu/v2/items.json?title=${title}`;
+  const url_2 = `https://api.lib.harvard.edu/v2/items.json?q=${title}`;
 
-    for (var url of [url_2]) { //Yes, this is improper, but has option to add urls
-      try {
-        let json = await save_and_return(url);
+  for (var url of [url_2]) { // Yes, this is improper, but has option to add urls
+    try {
+      const response = await fetch(url);
+      const jsonText = await response.text();
+      let json = JSON.parse(jsonText);
 
-        const nf = parseInt(json['pagination']['numFound'], 10);
-        console.log("Found ",nf);
-        if (nf > 0) {
-          if (nf === 1) {
-            console.log("Here with ",json['items']['mods']);
-            let jso = json['items']['mods'];
+      const nf = parseInt(json['pagination']['numFound'], 10);
+      if (nf > 0) {
+        if (nf === 1) {
+          let jso = json['items']['mods'];
+          let test_h = new HOBJECT(jso);
+          test_h.process(jso);
+          for (var obj_title of test_h.titles) {
+            if (obj_title.split(" ")[0] === titl.split(" ")[0]) {
+              all_json.push(test_h);
+            }
+          }
+        } else if (nf > 1) {
+          for (var jso of json['items']['mods']) {
             let test_h = new HOBJECT(jso);
             test_h.process(jso);
             for (var obj_title of test_h.titles) {
-                if (obj_title.split(" ")[0] === titl.split(" ")[0]) {
-                    all_json.push(test_h);
-                }
-            }
-          } else if (nf > 1) {
-            for (var jso of json['items']['mods']) {
-              let test_h = new HOBJECT(jso);
-              test_h.process(jso);
-                for (var obj_title of test_h.titles) {
-                    if (obj_title.split(" ")[0] === titl.split(" ")[0]) {
-                        all_json.push(test_h);
-                    }
-                }
+              if (obj_title.split(" ")[0] === titl.split(" ")[0]) {
+                all_json.push(test_h);
+              }
             }
           }
         }
-      } catch (error) {
-        console.error('Error:', error);
       }
+    } catch (error) {
+      console.error('Error:', error," with Title");
     }
   }
   return all_json.length ? all_json : null;

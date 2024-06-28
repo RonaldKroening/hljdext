@@ -72,9 +72,9 @@ function extract_title(obj){
 
 function extract_identifiers(json){
     let data = json['identifier'];
-    console.log(typeof data);
+    // console.log(typeof data);
     var ids = {};
-    console.log(data);
+    // console.log(data);
     try{
         for(var obj of data){
             let key = obj['@type']
@@ -104,7 +104,11 @@ function extract_hollis_id(json){
             }
         }
     }catch{
-        return extractIdentifier(json['relatedItem']['location']['url'])
+        try{
+            return extractIdentifier(json['relatedItem']['location']['url'])
+        }catch{
+            return null;
+        }
     }
     return null;
 }
@@ -116,7 +120,11 @@ function extract_subject(json){
             subs.push(obj['topic']);
         }
     }catch{
-        subs.push(json['subject']);
+        try{
+            subs.push(json['subject']);
+        }catch{
+            let i = 1;;
+        }
     }
     return subs;
 }
@@ -204,6 +212,7 @@ class HOBJECT {
         }
     }
     process(json){
+
         this.titles = extract_title(json);
         this.identifiers = extract_identifiers(json);
         this.hollisID = extract_hollis_id(json);
@@ -211,7 +220,7 @@ class HOBJECT {
         this.origin = extract_origin_info(json);
     }
     check_identifier(type,id){
-        return this.identifiers[type].includes(id);
+        return this.identifiers[type].includes(id) || this.asList().includes(id);
     }
     display(){
         console.log("Titles: ",this.titles );
