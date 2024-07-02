@@ -177,6 +177,16 @@ export function colIndex(sheet, columnName) {
   return -1;
 }
 
+function collect_hollis_from_json(json){
+  const regex = /https:\/\/id\.lib\.harvard\.edu\/alma\/\d+\/catalog/;
+  const match = json.match(regex);
+  if(match){
+    return [match[0]];
+  }else{
+    return ["Yellow: None Found"];
+  }
+}
+
 export function createColumn(name, sheet, values = []) {
   const range = XLSX.utils.decode_range(sheet['!ref']);
   const columnIndex = range.e.c + 1;
@@ -221,6 +231,7 @@ async function search_by_isbn(isbn) {
         try {
           const response = await fetch(url);
           const jsonText = await response.text();
+          
           let json = JSON.parse(jsonText);
 
           const nf = parseInt(json['pagination']['numFound'], 10);
@@ -242,9 +253,13 @@ async function search_by_isbn(isbn) {
               }
             }
           }
+          if(jsonText.includes(singleIsbn)){
+            return collect_hollis_from_json(jsonText);
+          }
         } catch (error) {
           console.error('Error:', error);
         }
+        
       }
     }
   } else {
@@ -278,9 +293,13 @@ async function search_by_isbn(isbn) {
             }
           }
         }
+        if(jsonText.includes(isbn)){
+          return collect_hollis_from_json(jsonText);
+        }
       } catch (error) {
         console.error('Error:', error," with ISBN");
       }
+      
     }
   }
   return null;

@@ -6,39 +6,38 @@ import { saveAs } from 'file-saver';
 
 const searchResults = { Red: [], Yellow: [], Green: [] };
 
-const maxCount = 150;
-
+var maxCount = 150;
+const testing = true;
 const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
   const [count, setCount] = useState(1);
+  const [resList, setResList] = useState([]);
   const range = XLSX.utils.decode_range(sheet['!ref']);
-  const resList = Array(range.e.r).fill('Green: No matches found.'); // Initialize resList with empty strings for each row
+  if(testing){
+    maxCount = range.e.r;
+  }
 
   const addColumnToSheet = (sheet, data) => {
     const range = XLSX.utils.decode_range(sheet['!ref']);
-    const colIndex = 0; // We want the new column to be the first column
+    const colIndex = 0; 
     
-    // Shift existing columns to the right
     for (let R = 0; R <= range.e.r; ++R) {
       for (let C = range.e.c; C >= 0; --C) {
         const newCellIndex = XLSX.utils.encode_cell({ r: R, c: C + 1 });
         const oldCellIndex = XLSX.utils.encode_cell({ r: R, c: C });
         sheet[newCellIndex] = sheet[oldCellIndex];
         if (R === 0) {
-          // Remove old header cell to avoid duplicate headers
           delete sheet[oldCellIndex];
         }
       }
     }
 
-    // Add header
+
     sheet[XLSX.utils.encode_cell({ r: 0, c: colIndex })] = { v: 'HOLLIS Search', t: 's' };
 
-    // Add data
     for (let R = 1; R <= range.e.r; ++R) {
       sheet[XLSX.utils.encode_cell({ r: R, c: colIndex })] = { v: data[R - 1] || '', t: 's' };
     }
 
-    // Update the range
     const newRange = XLSX.utils.decode_range(sheet['!ref']);
     newRange.e.c = range.e.c + 1;
     sheet['!ref'] = XLSX.utils.encode_range(newRange);
@@ -69,9 +68,11 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
     const performSearch = async () => {
       if (count <= range.e.r && count <= maxCount) {
         const searchValue = await utils.search_one_item(sheet, queries, count);
-        
-        // Ensure the searchValue is added to the correct index in resList
-        resList[count - 1] = searchValue;
+      
+
+        var newResList = resList.filter(() => true);
+        newResList.push(searchValue)
+        setResList(newResList);
 
         try {
           if (searchValue && searchValue.includes('Red')) {
@@ -92,7 +93,7 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
       }
 
       const title = workbook.SheetNames[0];
-      if (count === 25) {
+      if (count === range.e.r) {
         console.log("RESULTS");
         console.log(resList);
         console.log(sheet);
@@ -106,7 +107,7 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
     const intervalId = setInterval(async () => {
       document.getElementById('numSearched').innerHTML = `${count} of ${Math.min(range.e.r, maxCount)}`;
       await performSearch();
-    }, 4500);
+    }, 6000);
 
     return () => clearInterval(intervalId);
   }, [count, sheet, queries, workbook, fileInput, range.e.r, range.e.c, openHollisSearch]);
