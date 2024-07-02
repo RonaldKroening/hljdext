@@ -236,7 +236,7 @@ async function search_by_isbn(isbn) {
               for (var jso of json['items']['mods']) {
                 let test_h = new HOBJECT(jso);
                 test_h.process(jso);
-                if (test_h.isbn === singleIsbn) {
+                if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
                   return [test_h];
                 }
               }
@@ -265,7 +265,7 @@ async function search_by_isbn(isbn) {
             let jso = json['items']['mods'];
             let test_h = new HOBJECT(jso);
             test_h.process(jso);
-            if (test_h.check_identifier('isbn', isbn.toString())) {
+            if (test_h.isbn === isbn || test_h.asList().includes(isbn)) {
               return [test_h];
             }
           } else if (nf > 1) {

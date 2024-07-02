@@ -6,93 +6,72 @@ import { saveAs } from 'file-saver';
 
 const searchResults = { Red: [], Yellow: [], Green: [] };
 
-const maxCount = 50;
+const maxCount = 150;
 
 const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
   const [count, setCount] = useState(1);
   const range = XLSX.utils.decode_range(sheet['!ref']);
-  const resList = []; 
+  const resList = Array(range.e.r).fill('Green: No matches found.'); // Initialize resList with empty strings for each row
 
-  const handleFile = (file) => {
-    const reader = new FileReader();
-
-    return new Promise((resolve, reject) => {
-      reader.onload = (e) => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-
-        const range = XLSX.utils.decode_range(sheet['!ref']);
-
-        const firstColumn = [];
-        for (let R = range.s.r; R <= range.e.r; ++R) {
-          const cellAddress = XLSX.utils.encode_cell({ r: R, c: range.s.c });
-          const cell = sheet[cellAddress];
-          firstColumn.push(cell ? cell.v : null);
+  const addColumnToSheet = (sheet, data) => {
+    const range = XLSX.utils.decode_range(sheet['!ref']);
+    const colIndex = 0; // We want the new column to be the first column
+    
+    // Shift existing columns to the right
+    for (let R = 0; R <= range.e.r; ++R) {
+      for (let C = range.e.c; C >= 0; --C) {
+        const newCellIndex = XLSX.utils.encode_cell({ r: R, c: C + 1 });
+        const oldCellIndex = XLSX.utils.encode_cell({ r: R, c: C });
+        sheet[newCellIndex] = sheet[oldCellIndex];
+        if (R === 0) {
+          // Remove old header cell to avoid duplicate headers
+          delete sheet[oldCellIndex];
         }
+      }
+    }
 
-        resolve(firstColumn);
-      };
+    // Add header
+    sheet[XLSX.utils.encode_cell({ r: 0, c: colIndex })] = { v: 'HOLLIS Search', t: 's' };
 
-      reader.onerror = (error) => reject(error);
-      reader.readAsArrayBuffer(file);
-    });
+    // Add data
+    for (let R = 1; R <= range.e.r; ++R) {
+      sheet[XLSX.utils.encode_cell({ r: R, c: colIndex })] = { v: data[R - 1] || '', t: 's' };
+    }
+
+    // Update the range
+    const newRange = XLSX.utils.decode_range(sheet['!ref']);
+    newRange.e.c = range.e.c + 1;
+    sheet['!ref'] = XLSX.utils.encode_range(newRange);
+
+    return sheet;
   };
 
-  const saveSheet = async (sheet, file, title) => {
-    console.log(sheet);
-
-    const isbnCol = await handleFile(file);
-
-    const range = XLSX.utils.decode_range(sheet['!ref']);
-    const data = [];
-
-    const headerRow = [];
-    for (let C = 0; C <= range.e.c; ++C) {
-        const cell = sheet[XLSX.utils.encode_cell({ r: 0, c: C })];
-        headerRow.push(cell ? cell.v : '');
-    }
-    headerRow.splice(1, 0, 'ISBN'); 
-    data.push(headerRow);
-
-    for (let R = 1; R <= range.e.r; ++R) {
-        const row = [];
-        for (let C = 0; C <= range.e.c; ++C) {
-            const cell = sheet[XLSX.utils.encode_cell({ r: R, c: C })];
-            row.push(cell ? cell.v : '');
-        }
-        row.splice(1, 0, isbnCol[R - 1] || ''); 
-        data.push(row);
-    }
-
-    const newSheet = XLSX.utils.aoa_to_sheet(data);
+  const saveSheet = (sheet, data, title) => {
+    const updatedSheet = addColumnToSheet(sheet, data);
 
     const newWorkbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(newWorkbook, newSheet, 'Sheet1');
+    XLSX.utils.book_append_sheet(newWorkbook, updatedSheet, 'Sheet1');
 
     const wbout = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
-    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), "Modified"+title+".xlsx");
-};
+    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), "Modified" + title + ".xlsx");
+  };
 
-
-  const arrayToCheck = [12,19,20,28,2938,39,41,42];
+  const arrayToCheck = [12, 19, 20, 28, 2938, 39, 41, 42];
   const openHollisSearch = useCallback((qu) => {
     setTimeout(() => {
       const query = utils.getCell(sheet, count, utils.colIndex(sheet, qu));
       const url = `https://hollis.harvard.edu/primo-explore/search?query=any,contains,${query}&tab=books&search_scope=default_scope&vid=HVD2&lang=en_US&offset=0`;
       window.open(url, '_blank');
-    }, 1000);
+    }, 500);
   }, [count, sheet]);
 
   useEffect(() => {
     const performSearch = async () => {
-
       if (count <= range.e.r && count <= maxCount) {
         const searchValue = await utils.search_one_item(sheet, queries, count);
-
-        resList.push(searchValue);
+        
+        // Ensure the searchValue is added to the correct index in resList
+        resList[count - 1] = searchValue;
 
         try {
           if (searchValue && searchValue.includes('Red')) {
@@ -107,18 +86,18 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
         }
 
         setCount(prevCount => prevCount + 1);
-      }else{
+      } else {
         updateResults('Green', "Not Searched");
         setCount(prevCount => prevCount + 1);
       }
+
       const title = workbook.SheetNames[0];
-      if (count > range.e.r) {
+      if (count === 25) {
         console.log("RESULTS");
         console.log(resList);
         console.log(sheet);
-        utils.createColumn("HOLLIS Search",sheet,resList);
         console.log(title);
-        saveSheet(sheet, fileInput,title);
+        saveSheet(sheet, resList, title);
 
         clearInterval(intervalId);
       }
@@ -127,7 +106,7 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
     const intervalId = setInterval(async () => {
       document.getElementById('numSearched').innerHTML = `${count} of ${Math.min(range.e.r, maxCount)}`;
       await performSearch();
-    }, 5000);
+    }, 4500);
 
     return () => clearInterval(intervalId);
   }, [count, sheet, queries, workbook, fileInput, range.e.r, range.e.c, openHollisSearch]);
