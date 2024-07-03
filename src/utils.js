@@ -219,9 +219,8 @@ async function search_by_isbn(isbn) {
     isbn = isbn.replace("[ISSN]","");
   }
   
-  var all_json = [];
-  if (isbn.toString().includes(";")) {
-    for (var singleIsbn of isbn.split(";")) {
+  isbn = findISBNNumbers(isbn);
+  for (var singleIsbn of isbn) {
 
       const urls = [
         `https://api.lib.harvard.edu/v2/items.json?q=${singleIsbn}`
@@ -243,6 +242,9 @@ async function search_by_isbn(isbn) {
               if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
                 return [test_h];
               }
+              if(jso.includes(singleIsbn)){
+                return collect_hollis_from_json(jso);
+              }
             } else if (nf > 1) {
               for (var jso of json['items']['mods']) {
                 let test_h = new HOBJECT(jso);
@@ -250,63 +252,31 @@ async function search_by_isbn(isbn) {
                 if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
                   return [test_h];
                 }
+                if(jso.includes(singleIsbn)){
+                  return collect_hollis_from_json(jso);
+                }
               }
             }
-          }
-          if(jsonText.includes(singleIsbn)){
-            return collect_hollis_from_json(jsonText);
           }
         } catch (error) {
           console.error('Error:', error);
         }
-        
       }
     }
-  } else {
-    const urls = [
-      `https://api.lib.harvard.edu/v2/items.json?identifier=${isbn}`,
-      `https://api.lib.harvard.edu/v2/items.json?q=${isbn}`
-    ];
-
-    for (var url of urls) {
-      try {
-        const response = await fetch(url);
-        const jsonText = await response.text();
-        let json = JSON.parse(jsonText);
-
-        const nf = parseInt(json['pagination']['numFound'], 10);
-        if (nf > 0) {
-          if (nf === 1) {
-            let jso = json['items']['mods'];
-            let test_h = new HOBJECT(jso);
-            test_h.process(jso);
-            if (test_h.isbn === isbn || test_h.asList().includes(isbn)) {
-              return [test_h];
-            }
-          } else if (nf > 1) {
-            for (var jso of json['items']['mods']) {
-              let test_h = new HOBJECT(jso);
-              test_h.process(jso);
-              if (test_h.isbn === isbn || test_h.asList().includes(isbn)) {
-                return [test_h];
-              }
-            }
-          }
-        }
-        if(jsonText.includes(isbn)){
-          return collect_hollis_from_json(jsonText);
-        }
-      } catch (error) {
-        console.error('Error:', error," with ISBN");
-      }
-      
-    }
-  }
   return null;
 }
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function findISBNNumbers(inputString) {
+  const pattern = /\b\d{10}\b|\b\d{13}\b/g;
+  const i = inputString.match(pattern);
+  if(i){
+    return i;
+  }
+  return [];
 }
 
 export async function search_one_item(sheet, queries, r) {
