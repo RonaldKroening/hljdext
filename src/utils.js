@@ -271,13 +271,22 @@ function delay(ms) {
 }
 
 function findISBNNumbers(inputString) {
-  const pattern = /\b\d{10}\b|\b\d{13}\b/g;
-  const i = inputString.match(pattern);
-  if(i){
-    return i;
+  const isbnPattern = /\b\d{10}\b|\b\d{13}\b/g;
+  const issnPattern = /\b\d{4}-\d{3}[\dX]\b/g; 
+  const delimiters = /[;,.\-&]/;
+
+  const segments = inputString.split(delimiters);
+  
+  let matches = [];
+  for (const segment of segments) {
+    const isbnMatches = segment.match(isbnPattern) || [];
+    const issnMatches = segment.match(issnPattern) || [];
+    matches = matches.concat(isbnMatches, issnMatches);
   }
-  return [];
+  
+  return matches;
 }
+
 
 export async function search_one_item(sheet, queries, r) {
     let isbn_column = colIndex(sheet, queries['dropdowns'][0]);
