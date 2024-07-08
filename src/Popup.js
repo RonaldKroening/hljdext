@@ -107,7 +107,7 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
     const intervalId = setInterval(async () => {
       document.getElementById('numSearched').innerHTML = `${count} of ${Math.min(range.e.r, maxCount)}`;
       await performSearch();
-    }, 6000);
+    }, 7000);
 
     return () => clearInterval(intervalId);
   }, [count, sheet, queries, workbook, fileInput, range.e.r, range.e.c, openHollisSearch]);

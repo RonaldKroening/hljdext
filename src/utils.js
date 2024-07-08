@@ -236,9 +236,11 @@ async function search_by_isbn(isbn) {
           const nf = parseInt(json['pagination']['numFound'], 10);
           if (nf > 0) {
             if (nf === 1) {
-              let jso = json['items']['mods'];
+              var jso = json['items']['mods'];
               let test_h = new HOBJECT(jso);
               test_h.process(jso);
+              jso = jso.toString();
+
               if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
                 return [test_h];
               }
@@ -271,20 +273,17 @@ function delay(ms) {
 }
 
 function findISBNNumbers(inputString) {
-  const isbnPattern = /\b\d{10}\b|\b\d{13}\b/g;
-  const issnPattern = /\b\d{4}-\d{3}[\dX]\b/g; 
-  const delimiters = /[;,.\-&]/;
+  let regex = /\b(?:ISBN|ISSN|EISBN)\b\S*\s*/gi;
+  inputString = inputString.replace(regex, '');
 
-  const segments = inputString.split(delimiters);
-  
-  let matches = [];
-  for (const segment of segments) {
-    const isbnMatches = segment.match(isbnPattern) || [];
-    const issnMatches = segment.match(issnPattern) || [];
-    matches = matches.concat(isbnMatches, issnMatches);
-  }
-  
-  return matches;
+  regex = /\(\s*\)|\[\s*\]/g;
+  inputString = inputString.replace(regex, '');
+
+  regex = /[-.,;]\s*/g;
+  inputString = inputString.replace(regex, '');
+  inputString = inputString.replace(/\s+/g, ' ').trim();
+
+  return inputString.split(' ').join(' ');
 }
 
 
@@ -308,7 +307,7 @@ export async function search_one_item(sheet, queries, r) {
     var value = "";
 
     if (isbn_cell) {
-      await delay(1100);
+      await delay(1750);
       let isbn_res = await search_by_isbn(isbn_cell);
       if (isbn_res) {
         value = "Red: Hollis ID No. " + isbn_res[0].hollisID;
@@ -573,6 +572,12 @@ async function search_by_title(titl) {
           for (var obj_title of test_h.titles) {
             if (obj_title.split(" ")[0] === titl.split(" ")[0]) {
               all_json.push(test_h);
+            }
+            if (test_h.asList().includes(obj_title) ) {
+              return [test_h];
+            }
+            if(jso.includes(obj_title)){
+              return collect_hollis_from_json(jso);
             }
           }
         } else if (nf > 1) {
