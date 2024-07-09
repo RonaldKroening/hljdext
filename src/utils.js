@@ -212,6 +212,8 @@ export function createColumn(name, sheet, values = []) {
 
 async function search_by_isbn(isbn) {
   // console.log("Checking ISBN: ",isbn);
+  isbn = String(isbn);
+  console.log("ISBN: ",isbn, " of type ", typeof(isbn));
 
   if(isbn.includes("[ISSN]")){
     isbn = isbn.replace("[ISSN]","");
