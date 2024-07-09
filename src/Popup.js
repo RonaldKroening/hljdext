@@ -54,8 +54,7 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
     const wbout = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
     saveAs(new Blob([wbout], { type: 'application/octet-stream' }), "Modified" + title + ".xlsx");
   };
-
-  const arrayToCheck = [12, 19, 20, 28, 2938, 39, 41, 42];
+  const arrayToCheck = [12, 19, 28,29, 41, 61, 63, 64,65,68,74,86,93,94,96,97,98,99,100,101,102,103,104,105,106,107,108];
   const openHollisSearch = useCallback((qu) => {
     setTimeout(() => {
       const query = utils.getCell(sheet, count, utils.colIndex(sheet, qu));
@@ -66,7 +65,7 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
 
   useEffect(() => {
     const performSearch = async () => {
-      if (count <= range.e.r && count <= maxCount) {
+      if (count <= range.e.r && count <= maxCount ) {
         const searchValue = await utils.search_one_item(sheet, queries, count);
       
 
@@ -76,24 +75,33 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
 
         try {
           if (searchValue && searchValue.includes('Red')) {
+            console.log("We did it!!!!!");
             updateResults('Red', searchValue);
-          } else if (searchValue && searchValue.includes('Green')) {
-            updateResults('Green', searchValue);
           } else if (searchValue && searchValue.includes('Yellow')) {
+            console.log("we kinda did it!");
             updateResults('Yellow', searchValue);
-          }
+          } else if (searchValue && searchValue.includes('Green')) {
+            console.log("we may be cooked.");
+            updateResults('Green', searchValue);
+          } 
+          
         } catch {
           console.error('Error found with includes: ', searchValue);
         }
 
         setCount(prevCount => prevCount + 1);
-      } else {
+      } 
+      // else if(!arrayToCheck.includes(count)){
+      //   updateResults('Red', "Found Earlier.");
+      //   setCount(prevCount => prevCount + 1);
+      // }
+      else {
         updateResults('Green', "Not Searched");
         setCount(prevCount => prevCount + 1);
       }
 
       const title = workbook.SheetNames[0];
-      if (count === range.e.r) {
+       if (count ===range.e.r) {
         console.log("RESULTS");
         console.log(resList);
         console.log(sheet);

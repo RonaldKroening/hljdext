@@ -178,7 +178,8 @@ export function colIndex(sheet, columnName) {
 }
 
 function collect_hollis_from_json(json){
-  const regex = /https:\/\/id\.lib\.harvard\.edu\/alma\/\d+\/catalog/;
+  const regex = /https:\/\/id\.lib\.harvard\.edu\/alma\/(\d+)\/catalog/;
+  
   const match = json.match(regex);
   if(match){
     return [match[0]];
@@ -211,10 +212,7 @@ export function createColumn(name, sheet, values = []) {
 
 async function search_by_isbn(isbn) {
   // console.log("Checking ISBN: ",isbn);
-  if (!isbn || isbn.trim() === "") {
-    // console.log("ISBN Not found. Returning.");
-    return null;
-  }
+
   if(isbn.includes("[ISSN]")){
     isbn = isbn.replace("[ISSN]","");
   }
@@ -244,7 +242,7 @@ async function search_by_isbn(isbn) {
               if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
                 return [test_h];
               }
-              if(jso.includes(singleIsbn)){
+              if(jso.toString().includes(singleIsbn)){
                 return collect_hollis_from_json(jso);
               }
             } else if (nf > 1) {
@@ -254,8 +252,9 @@ async function search_by_isbn(isbn) {
                 if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
                   return [test_h];
                 }
-                if(jso.includes(singleIsbn)){
-                  return collect_hollis_from_json(jso);
+                if(jso.toString().includes(singleIsbn)){
+                  test_h.hollisID = collect_hollis_from_json(jso);
+                  return [test_h];
                 }
               }
             }
@@ -279,11 +278,12 @@ function findISBNNumbers(inputString) {
   regex = /\(\s*\)|\[\s*\]/g;
   inputString = inputString.replace(regex, '');
 
-  regex = /[-.,;]\s*/g;
+  regex = /[.,;]\s*/g;
   inputString = inputString.replace(regex, '');
   inputString = inputString.replace(/\s+/g, ' ').trim();
-
-  return inputString.split(' ').join(' ');
+  const isbns = inputString.split(' ').join(' ');
+  console.log("ISBNs: ",isbns);
+  return isbns;
 }
 
 
@@ -310,7 +310,8 @@ export async function search_one_item(sheet, queries, r) {
       await delay(1750);
       let isbn_res = await search_by_isbn(isbn_cell);
       if (isbn_res) {
-        value = "Red: Hollis ID No. " + isbn_res[0].hollisID;
+        let hollcode = isbn_res[0].hollisID;
+        value = "Red: Hollis ID No. " + hollcode;
       }
     }
 
@@ -576,7 +577,7 @@ async function search_by_title(titl) {
             if (test_h.asList().includes(obj_title) ) {
               return [test_h];
             }
-            if(jso.includes(obj_title)){
+            if(jso.toString().includes(obj_title)){
               return collect_hollis_from_json(jso);
             }
           }

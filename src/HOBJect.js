@@ -220,7 +220,12 @@ class HOBJECT {
         this.origin = extract_origin_info(json);
     }
     check_identifier(type,id){
-        return this.identifiers[type].includes(id) || this.asList().includes(id);
+        if(!(type in this.identifiers)){
+            return this.asList().includes(id);
+        }else{
+            return (this.asList().includes(id) || type in this.identifiers);
+        }
+        
     }
     display(){
         console.log("Titles: ",this.titles );
