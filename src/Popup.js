@@ -65,7 +65,7 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
 
   useEffect(() => {
     const performSearch = async () => {
-      if (count <= range.e.r && count <= maxCount ) {
+      if (count <= range.e.r ) {
         const searchValue = await utils.search_one_item(sheet, queries, count);
       
 
@@ -101,7 +101,7 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
       }
 
       const title = workbook.SheetNames[0];
-       if (count ===range.e.r) {
+       if (count ===range.e.r+1) {
         console.log("RESULTS");
         console.log(resList);
         console.log(sheet);

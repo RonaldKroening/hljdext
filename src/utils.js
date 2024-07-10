@@ -230,6 +230,7 @@ async function search_by_isbn(isbn) {
   
   isbn = findISBNNumbers(isbn);
   // console.log("ISBNs Searching: ",isbn);
+  var isbn_result_obs = [];
   for (var singleIsbn of isbn) {
       // console.log("Searching isbn: ",singleIsbn);
       const urls = [
@@ -260,14 +261,14 @@ async function search_by_isbn(isbn) {
               if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
                 // console.log(jso, "testing utils");
                 // console.log("Found by ISBN: ",singleIsbn," ",test_h.hollisID);
-                return [test_h];
+                isbn_result_obs.push(test_h);
               }
 
               if(jso.toString().includes(singleIsbn) || JSON.stringify(jso)){
                 jso = JSON.stringify(jso);
                 test_h.hollisID = collect_hollis_from_json(jso);
                 // console.log("Found by ISBN: ",singleIsbn," ",test_h.hollisID);
-                return [test_h];
+                isbn_result_obs.push(test_h);
               }
 
             } else if (nf > 1) {
@@ -283,14 +284,14 @@ async function search_by_isbn(isbn) {
                 if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
                   // console.log(jso, "testing utils");
                   // console.log("Found by ISBN: ",singleIsbn," ",test_h.hollisID);
-                  return [test_h];
+                  isbn_result_obs.push(test_h);
                 }
 
                 if(jso.toString().includes(singleIsbn) || JSON.stringify(jso)){
                   jso = JSON.stringify(jso);
                   test_h.hollisID = collect_hollis_from_json(jso);
                   // console.log("Found by ISBN: ",singleIsbn," ",test_h.hollisID);
-                  return [test_h];
+                  isbn_result_obs.push(test_h);
                 }
               }
             }
@@ -300,7 +301,7 @@ async function search_by_isbn(isbn) {
         }
       }
     }
-  return null;
+  return isbn_result_obs;
 }
 
 function delay(ms) {
@@ -347,9 +348,16 @@ export async function search_one_item(sheet, queries, r) {
       await delay(1250);
       let isbn_res = await search_by_isbn(isbn_cell);
       if (isbn_res) {
+        if(isbn_res.length == 1){
+          let hollcode = isbn_res[0].hollisID;
+          value = "Red: Hollis ID No. " + hollcode;
+        }else{
+          // let correct_Res = get_correct_one(isbn_cell,title_cell,author_cell, isbn_res);
+          // let hollcode = correct_Res.hollisID;
+          value = "Yellow: Multiple Matches Found. ";
+        }
         // console.log(isbn_res);
-        let hollcode = isbn_res[0].hollisID;
-        value = "Red: Hollis ID No. " + hollcode;
+        
       }
     }
 
