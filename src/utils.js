@@ -178,11 +178,20 @@ export function colIndex(sheet, columnName) {
 }
 
 function collect_hollis_from_json(json){
-  const regex = /https:\/\/id\.lib\.harvard\.edu\/alma\/(\d+)\/catalog/;
+  json = json.toString();
+  // console.log("Testing utils json");
+  // console.log(json, "  ",String(json));
+   
+  const regex = /https:\/\/id\.lib\.harvard\.edu\/alma\/[0-9]+\/catalog/i;
   
-  const match = json.match(regex);
+  var match = json.match(regex);
+  // console.log("Given JSON: ",json, " match ",match);
   if(match){
-    return [match[0]];
+    // console.log("Found hollis: ",match);
+    match = match[0];
+    match = match.replace("/catalog","");
+    match = match.replace("https://id.lib.harvard.edu/alma/","");
+    return match;
   }else{
     return ["Yellow: None Found"];
   }
@@ -211,17 +220,18 @@ export function createColumn(name, sheet, values = []) {
 }
 
 async function search_by_isbn(isbn) {
-  // console.log("Checking ISBN: ",isbn);
+  // // console.log("Checking ISBN: ",isbn);
   isbn = String(isbn);
-  console.log("ISBN: ",isbn, " of type ", typeof(isbn));
+  // console.log("ISBN: ",isbn, " of type ", typeof(isbn));
 
   if(isbn.includes("[ISSN]")){
     isbn = isbn.replace("[ISSN]","");
   }
   
   isbn = findISBNNumbers(isbn);
+  // console.log("ISBNs Searching: ",isbn);
   for (var singleIsbn of isbn) {
-
+      // console.log("Searching isbn: ",singleIsbn);
       const urls = [
         `https://api.lib.harvard.edu/v2/items.json?q=${singleIsbn}`
       ];
@@ -232,30 +242,54 @@ async function search_by_isbn(isbn) {
           const jsonText = await response.text();
           
           let json = JSON.parse(jsonText);
+          // console.log("Results: ",json);
 
           const nf = parseInt(json['pagination']['numFound'], 10);
           if (nf > 0) {
             if (nf === 1) {
               var jso = json['items']['mods'];
+              
+  
+              var hollisIDFound = collect_hollis_from_json(JSON.stringify(jso));
+              // console.log("Found HOLLIS ID: ",hollisIDFound);
               let test_h = new HOBJECT(jso);
               test_h.process(jso);
+              test_h.hollisID = hollisIDFound;
               jso = jso.toString();
 
               if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
+                // console.log(jso, "testing utils");
+                // console.log("Found by ISBN: ",singleIsbn," ",test_h.hollisID);
                 return [test_h];
               }
-              if(jso.toString().includes(singleIsbn)){
-                return collect_hollis_from_json(jso);
+
+              if(jso.toString().includes(singleIsbn) || JSON.stringify(jso)){
+                jso = JSON.stringify(jso);
+                test_h.hollisID = collect_hollis_from_json(jso);
+                // console.log("Found by ISBN: ",singleIsbn," ",test_h.hollisID);
+                return [test_h];
               }
+
             } else if (nf > 1) {
               for (var jso of json['items']['mods']) {
+
+                var hollisIDFound = collect_hollis_from_json(JSON.stringify(jso));
+                // console.log("Found HOLLIS ID: ",hollisIDFound);
                 let test_h = new HOBJECT(jso);
                 test_h.process(jso);
+                test_h.hollisID = hollisIDFound;
+                jso = jso.toString();
+
                 if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
+                  // console.log(jso, "testing utils");
+                  // console.log("Found by ISBN: ",singleIsbn," ",test_h.hollisID);
                   return [test_h];
                 }
-                if(jso.toString().includes(singleIsbn)){
+
+                if(jso.toString().includes(singleIsbn) || JSON.stringify(jso)){
+                  jso = JSON.stringify(jso);
                   test_h.hollisID = collect_hollis_from_json(jso);
+                  // console.log("Found by ISBN: ",singleIsbn," ",test_h.hollisID);
                   return [test_h];
                 }
               }
@@ -283,15 +317,16 @@ function findISBNNumbers(inputString) {
   regex = /[.,;]\s*/g;
   inputString = inputString.replace(regex, '');
   inputString = inputString.replace(/\s+/g, ' ').trim();
-  const isbns = inputString.split(' ').join(' ');
-  console.log("ISBNs: ",isbns);
+  const isbns = inputString.split(' ');
+  // console.log("ISBNs: ",isbns);
+
   return isbns;
 }
 
 
 export async function search_one_item(sheet, queries, r) {
     let isbn_column = colIndex(sheet, queries['dropdowns'][0]);
-    // console.log("ISBN Col in new sheet: ",isbn_column);
+    // // console.log("ISBN Col in new sheet: ",isbn_column);
     let title_column = colIndex(sheet, queries['dropdowns'][1]);
     let author_column = colIndex(sheet, queries['dropdowns'][2]);
     let remaining_columns = notcols(queries['allSelected'], queries['dropdowns']);
@@ -305,13 +340,14 @@ export async function search_one_item(sheet, queries, r) {
     let isbn_cell = getCell(sheet, r, isbn_column);
     let title_cell = getCell(sheet, r, title_column);
     let author_cell = getCell(sheet, r, author_column);
-    // console.log("ISBN Cells: ",isbn_cell);
+    // // console.log("ISBN Cells: ",isbn_cell);
     var value = "";
 
     if (isbn_cell) {
-      await delay(1750);
+      await delay(1250);
       let isbn_res = await search_by_isbn(isbn_cell);
       if (isbn_res) {
+        // console.log(isbn_res);
         let hollcode = isbn_res[0].hollisID;
         value = "Red: Hollis ID No. " + hollcode;
       }
@@ -384,9 +420,9 @@ export async function search_one_item(sheet, queries, r) {
     }
     const valStr = isbn_cell + " " + title_cell + " "+author_cell;
     // if(value.includes("Green")){
-    //   // console.log("No match found for "+valStr);
+    //   // // console.log("No match found for "+valStr);
     // }
-    console.log("Value for  "+valStr+ ": "+value);
+    // console.log("Value for  "+valStr+ ": "+value);
     
     return value;
 }

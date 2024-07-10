@@ -72,9 +72,9 @@ function extract_title(obj){
 
 function extract_identifiers(json){
     let data = json['identifier'];
-    // console.log(typeof data);
+    // // console.log(typeof data);
     var ids = {};
-    // console.log(data);
+    // // console.log(data);
     try{
         for(var obj of data){
             let key = obj['@type']
@@ -97,21 +97,21 @@ function extract_genre(json){
 }
 
 function extract_hollis_id(json){
-    try{
-        for(var poss of json['relatedItem']){
-            if(poss['@otherType'] == 'HOLLIS record'){
-                return extractIdentifier(poss['location']['url']);
-            }
-        }
-    }catch{
-        try{
-            return extractIdentifier(json['relatedItem']['location']['url'])
-        }catch{
-            return null;
-        }
+    json = JSON.stringify(json);
+    
+    const regex = /https:\/\/id\.lib\.harvard\.edu\/alma\/[0-9]+\/catalog/i;
+    
+    var match = json.match(regex);
+    if(match){
+        match = match[0];
+        match = match.replace("/catalog","");
+        match = match.replace("https://id.lib.harvard.edu/alma/","");
+        return match;
+    }else{
+        return ["Yellow: None Found"];
     }
-    return null;
-}
+ }
+ 
 
 function extract_subject(json){
     let subs = [];
@@ -228,10 +228,10 @@ class HOBJECT {
         
     }
     display(){
-        console.log("Titles: ",this.titles );
-        console.log("Identifiers: ",this.identifiers);
-        console.log("Origin: ",this.origin);
-        console.log("Subject: ",this.subject);
+        // console.log("Titles: ",this.titles );
+        // console.log("Identifiers: ",this.identifiers);
+        // console.log("Origin: ",this.origin);
+        // console.log("Subject: ",this.subject);
     }
     asList(){
         var L = []
