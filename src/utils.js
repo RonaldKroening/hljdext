@@ -494,6 +494,8 @@ async function search_by_author(author) {
             try {
               let test_h = new HOBJECT(jso);
               test_h.process(jso);
+              jso = JSON.stringify(jso);
+              test_h.hollisID = collect_hollis_from_json(jso);
               if (test_h.check_author(author)) {
                 all_json.push(test_h);
               }
@@ -531,6 +533,8 @@ async function search_by_query(query) {
           let jso = json['items']['mods'];
           let test_h = new HOBJECT(jso);
           test_h.process(jso);
+          jso = JSON.stringify(jso);
+          test_h.hollisID = collect_hollis_from_json(jso);
           if (query in test_h.asList()) {
             all_json.push(test_h);
           }
@@ -628,6 +632,8 @@ async function search_by_title(titl) {
           let jso = json['items']['mods'];
           let test_h = new HOBJECT(jso);
           test_h.process(jso);
+          jso = JSON.stringify(jso);
+          test_h.hollisID = collect_hollis_from_json(jso);
           for (var obj_title of test_h.titles) {
             if (obj_title.split(" ")[0] === titl.split(" ")[0]) {
               all_json.push(test_h);
@@ -643,6 +649,8 @@ async function search_by_title(titl) {
           for (var jso of json['items']['mods']) {
             let test_h = new HOBJECT(jso);
             test_h.process(jso);
+            jso = JSON.stringify(jso);
+            test_h.hollisID = collect_hollis_from_json(jso);
             for (var obj_title of test_h.titles) {
               if (obj_title.split(" ")[0] === titl.split(" ")[0]) {
                 all_json.push(test_h);
