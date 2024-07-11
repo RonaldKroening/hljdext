@@ -122,7 +122,7 @@ export function moveColumnToFirst(sheet, colName) {
 
   for (let col = colIndex; col > 0; col--) {
     for (let row = range.s.r; row <= range.e.r; row++) {
-      const fromCellAddress = XLSX.utils.encode_cell({ c: col - 1, r: row });
+      const fromCellAddress = XLSX.utils.encode_cell({ c: col - 1, r: row }); 
       const toCellAddress = XLSX.utils.encode_cell({ c: col, r: row });
 
       sheet[toCellAddress] = sheet[fromCellAddress];
@@ -367,6 +367,7 @@ export async function search_one_item(sheet, queries, r) {
         }else if(isbn_res.length == 0){
           value = "Green: No matches found.";
           titles_found.push("---");
+          console.log("checking workflow here");
         }
         // console.log(isbn_res);
         
