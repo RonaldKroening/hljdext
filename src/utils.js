@@ -341,6 +341,7 @@ export async function search_one_item(sheet, queries, r) {
     }
 
     var values = [];
+    var titles_found = []; 
     const range = XLSX.utils.decode_range(sheet['!ref']);
     let isbn_cell = getCell(sheet, r, isbn_column);
     let title_cell = getCell(sheet, r, title_column);
@@ -356,13 +357,16 @@ export async function search_one_item(sheet, queries, r) {
         if(isbn_res.length == 1){
           let hollcode = isbn_res[0].hollisID;
           value = "Red: Hollis ID No. " + hollcode;
+          titles_found.push(isbn_res[0].titles);
         }else if(isbn_res.length > 1){
           // let correct_Res = get_correct_one(isbn_cell,title_cell,author_cell, isbn_res);
           // let hollcode = correct_Res.hollisID;
+          titles_found.push("---");
           console.log("Many found");
           value = "Yellow: Multiple Matches Found. ";
         }else if(isbn_res.length == 0){
           value = "Green: No matches found.";
+          titles_found.push("---");
         }
         // console.log(isbn_res);
         
@@ -440,7 +444,7 @@ export async function search_one_item(sheet, queries, r) {
     // }
     // console.log("Value for  "+valStr+ ": "+value);
     
-    return value;
+    return [value,titles_found];
 }
 
 // function openHollisSearch(query) {

@@ -8,15 +8,19 @@ const searchResults = { Red: [], Yellow: [], Green: [] };
 
 var maxCount = 150;
 const testing = true;
-const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
+const Popup = ({ sheet, queries, onClose, workbook, fileInput, fname }) => {
   const [count, setCount] = useState(1);
   const [resList, setResList] = useState([]);
+  const [titleList, setTitleList] = useState([]);
   const range = XLSX.utils.decode_range(sheet['!ref']);
+  const [name,setName] = useState(fname);
+  console.log("File name: ",fname);
+  
   if(testing){
     maxCount = range.e.r;
   }
 
-  const addColumnToSheet = (sheet, data) => {
+  const addColumnToSheet = (sheet, data, name) => {
     const range = XLSX.utils.decode_range(sheet['!ref']);
     const colIndex = 0; 
     
@@ -32,7 +36,7 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
     }
 
 
-    sheet[XLSX.utils.encode_cell({ r: 0, c: colIndex })] = { v: 'HOLLIS Search', t: 's' };
+    sheet[XLSX.utils.encode_cell({ r: 0, c: colIndex })] = { v: name, t: 's' };
 
     for (let R = 1; R <= range.e.r; ++R) {
       sheet[XLSX.utils.encode_cell({ r: R, c: colIndex })] = { v: data[R - 1] || '', t: 's' };
@@ -45,14 +49,15 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
     return sheet;
   };
 
-  const saveSheet = (sheet, data, title) => {
-    const updatedSheet = addColumnToSheet(sheet, data);
+  const saveSheet = (sheet, data, title, titleList) => {
+    var updatedSheet = addColumnToSheet(sheet, data, "HOLLIS Search");
+    updatedSheet = addColumnToSheet(sheet, titleList, "Titles of Found Values");
 
     const newWorkbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(newWorkbook, updatedSheet, 'Sheet1');
 
     const wbout = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
-    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), "Modified" + title + ".xlsx");
+    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), "Modified_" + name);
   };
   
   const arrayToCheck = [12, 19, 28,29, 41, 61, 63, 64,65,68,74,86,93,94,96,97,98,99,100,101,102,103,104,105,106,107,108];
@@ -67,12 +72,18 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
   useEffect(() => {
     const performSearch = async () => {
       if (count <= range.e.r ) {
-        const searchValue = await utils.search_one_item(sheet, queries, count);
+        const sv = await utils.search_one_item(sheet, queries, count);
+        const searchValue = sv[0];
+        const title_found = sv[1];
       
 
         var newResList = resList.filter(() => true);
         newResList.push(searchValue)
         setResList(newResList);
+
+        var new_title_list = titleList.filter(() => true);
+        new_title_list.push(title_found);
+        setTitleList(new_title_list);
 
         try {
           if (searchValue && searchValue.includes('Red')) {
@@ -97,20 +108,20 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
       //   setCount(prevCount => prevCount + 1);
       // }
       else {
-        if(count <= range.e.r ){
-          updateResults('Green', "Not Searched");
-          setCount(prevCount => prevCount + 1);
-        }
-        
+        // if(count  ){
+        //   updateResults('Green', "Not Searched");
+        //   setCount(prevCount => prevCount + 1);
+        // }
+        let k=1;
       }
 
       const title = workbook.SheetNames[0];
-       if (count ===range.e.r+1) {
+       if (count ===range.e.r ) {
         console.log("RESULTS");
         console.log(resList);
         console.log(sheet);
         console.log(title);
-        saveSheet(sheet, resList, title);
+        saveSheet(sheet, resList, title, titleList);
 
         clearInterval(intervalId);
       }
