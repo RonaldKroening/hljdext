@@ -324,6 +324,10 @@ function findISBNNumbers(inputString) {
   return isbns;
 }
 
+function get_correct_one(isbn, title, author){
+  let ret = "";
+  return ret;
+}
 
 export async function search_one_item(sheet, queries, r) {
     let isbn_column = colIndex(sheet, queries['dropdowns'][0]);
@@ -347,14 +351,18 @@ export async function search_one_item(sheet, queries, r) {
     if (isbn_cell) {
       await delay(1250);
       let isbn_res = await search_by_isbn(isbn_cell);
+      console.log("ISBN Search Result: ",isbn_res, " Of Length: ",isbn_res.length);
       if (isbn_res) {
         if(isbn_res.length == 1){
           let hollcode = isbn_res[0].hollisID;
           value = "Red: Hollis ID No. " + hollcode;
-        }else{
+        }else if(isbn_res.length > 1){
           // let correct_Res = get_correct_one(isbn_cell,title_cell,author_cell, isbn_res);
           // let hollcode = correct_Res.hollisID;
+          console.log("Many found");
           value = "Yellow: Multiple Matches Found. ";
+        }else if(isbn_res.length == 0){
+          value = "Green: No matches found.";
         }
         // console.log(isbn_res);
         

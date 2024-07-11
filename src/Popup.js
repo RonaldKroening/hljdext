@@ -54,6 +54,7 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
     const wbout = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
     saveAs(new Blob([wbout], { type: 'application/octet-stream' }), "Modified" + title + ".xlsx");
   };
+  
   const arrayToCheck = [12, 19, 28,29, 41, 61, 63, 64,65,68,74,86,93,94,96,97,98,99,100,101,102,103,104,105,106,107,108];
   const openHollisSearch = useCallback((qu) => {
     setTimeout(() => {
@@ -96,8 +97,11 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput }) => {
       //   setCount(prevCount => prevCount + 1);
       // }
       else {
-        updateResults('Green', "Not Searched");
-        setCount(prevCount => prevCount + 1);
+        if(count <= range.e.r ){
+          updateResults('Green', "Not Searched");
+          setCount(prevCount => prevCount + 1);
+        }
+        
       }
 
       const title = workbook.SheetNames[0];
