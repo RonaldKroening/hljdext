@@ -103,17 +103,7 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput, fname }) => {
 
         setCount(prevCount => prevCount + 1);
       } 
-      // else if(!arrayToCheck.includes(count)){
-      //   updateResults('Red', "Found Earlier.");
-      //   setCount(prevCount => prevCount + 1);
-      // }
-      else {
-        // if(count  ){
-        //   updateResults('Green', "Not Searched");
-        //   setCount(prevCount => prevCount + 1);
-        // }
-        let k=1;
-      }
+      
 
       const title = workbook.SheetNames[0];
        if (count ===range.e.r ) {

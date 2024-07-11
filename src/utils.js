@@ -261,10 +261,10 @@ async function search_by_isbn(isbn) {
               if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
                 // console.log(jso, "testing utils");
                 // console.log("Found by ISBN: ",singleIsbn," ",test_h.hollisID);
+                jso = JSON.stringify(jso);
+                test_h.hollisID = collect_hollis_from_json(jso);
                 isbn_result_obs.push(test_h);
-              }
-
-              if(jso.toString().includes(singleIsbn) || JSON.stringify(jso)){
+              }else if(jso.toString().includes(singleIsbn) || JSON.stringify(jso)){
                 jso = JSON.stringify(jso);
                 test_h.hollisID = collect_hollis_from_json(jso);
                 // console.log("Found by ISBN: ",singleIsbn," ",test_h.hollisID);
