@@ -181,6 +181,7 @@ function collect_hollis_from_json(json){
   json = json.toString();
   // console.log("Testing utils json");
   // console.log(json, "  ",String(json));
+  console.log("Finding HOLLIS ID from ",json);
    
   const regex = /https:\/\/id\.lib\.harvard\.edu\/alma\/[0-9]+\/catalog/i;
   
@@ -251,12 +252,10 @@ async function search_by_isbn(isbn) {
               var jso = json['items']['mods'];
               
   
-              var hollisIDFound = collect_hollis_from_json(JSON.stringify(jso));
               // console.log("Found HOLLIS ID: ",hollisIDFound);
               let test_h = new HOBJECT(jso);
               test_h.process(jso);
               test_h.hollisID = hollisIDFound;
-              jso = jso.toString();
 
               if (test_h.check_identifier('isbn', singleIsbn.toString()) || test_h.asList().includes(isbn) ) {
                 // console.log(jso, "testing utils");
@@ -266,7 +265,7 @@ async function search_by_isbn(isbn) {
                 isbn_result_obs.push(test_h);
               }else if(jso.toString().includes(singleIsbn) || JSON.stringify(jso)){
                 jso = JSON.stringify(jso);
-                test_h.hollisID = collect_hollis_from_json(jso);
+                test_h.hollisID = collect_hollis_from_json(JSON.stringify(jso));
                 // console.log("Found by ISBN: ",singleIsbn," ",test_h.hollisID);
                 isbn_result_obs.push(test_h);
               }
