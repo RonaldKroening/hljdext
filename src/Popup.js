@@ -57,7 +57,7 @@ const Popup = ({ sheet, queries, onClose, workbook, fileInput, fname }) => {
     XLSX.utils.book_append_sheet(newWorkbook, updatedSheet, 'Sheet1');
 
     const wbout = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
-    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), "Modified_" + name);
+    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), name.replace(".xlsx","") + "_isbn_searched.xlsx");
   };
   
   const arrayToCheck = [12, 19, 28,29, 41, 61, 63, 64,65,68,74,86,93,94,96,97,98,99,100,101,102,103,104,105,106,107,108];
