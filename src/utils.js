@@ -313,6 +313,65 @@ async function search_by_isbn(isbn) {
 
   return isbn_result_obs;
 }
+async function search_by_eisbn(eisbn) {
+  eisbn = String(eisbn);
+
+  if (eisbn.includes("[ISSN]")) {
+    eisbn = eisbn.replace("[ISSN]", "");
+  }
+
+  eisbn = findISBNNumbers(eisbn);
+  const eisbn_result_obs = [];
+
+  for (const singleEIsbn of eisbn) {
+    await delay(750);
+
+    const urls = [
+      `https://api.lib.harvard.edu/v2/items.json?identifier=${singleEIsbn}`,
+    ];
+
+    for (const url of urls) {
+      try {
+        await delay(250);
+        const response = await fetch(url);
+        const jsonText = await response.text();
+        const json = JSON.parse(jsonText);
+        const nf = parseInt(json['pagination']['numFound'], 10);
+        console.log(`Found ${nf} results! with ISBN: ${singleEIsbn}`);
+        if (nf > 0) {
+          if(nf == 1){
+            const jso = json['items']['mods'];
+            console.log(jso);
+            if(check_json(jso,singleEIsbn)){
+              if(!present(eisbn_result_obs,jso)){
+                eisbn_result_obs.push(jso);
+              }
+            }
+          }else{
+            for (const jso of json['items']['mods']) {
+              console.log(jso);
+              let check = check_json(jso,singleEIsbn);
+              if(check){
+                if(!present(eisbn_result_obs,jso)){
+                  eisbn_result_obs.push(jso);
+                }
+              }
+            }
+          }
+          
+        }
+      } catch (error) {
+        console.error(`Error fetching data from URL: ${url}`, error);
+      }
+    }
+  }
+  console.log(`Search results for ${eisbn}: ${eisbn_result_obs}`);
+  for(const json of eisbn_result_obs){
+    console.log("Result ",json);
+  }
+
+  return eisbn_result_obs;
+}
 function findHollis(json){
   json = JSON.stringify(json);
   const regex = /https:\/\/id\.lib\.harvard\.edu\/alma\/[0-9]+\/catalog/i;
@@ -391,21 +450,22 @@ function getTitle(input) {
 export async function search_one_item(sheet, queries, r) {
     delay(1000*queries.length);//api length
     let isbn_column = colIndex(sheet, queries['dropdowns'][0]);
-    // // // // console.log("ISBN Col in new sheet: ",isbn_column);
-    let title_column = colIndex(sheet, queries['dropdowns'][1]);
-    let author_column = colIndex(sheet, queries['dropdowns'][2]);
-    let remaining_columns = notcols(queries['allSelected'], queries['dropdowns']);
 
-    for (var i in remaining_columns) {
-      remaining_columns[i] = colIndex(sheet, remaining_columns[i]);
-    }
+    let eisbn_column = colIndex(sheet, queries['dropdowns'][1]);
+
+    // let remaining_columns = notcols(queries['allSelected'], queries['dropdowns']);
+
+    // for (var i in remaining_columns) {
+    //   remaining_columns[i] = colIndex(sheet, remaining_columns[i]);
+    // }
 
     var values = [];
     var titles_found = []; 
     const range = XLSX.utils.decode_range(sheet['!ref']);
     let isbn_cell = getCell(sheet, r, isbn_column);
-    let title_cell = getCell(sheet, r, title_column);
-    let author_cell = getCell(sheet, r, author_column);
+    // let title_cell = getCell(sheet, r, title_column);
+    // let author_cell = getCell(sheet, r, author_column);
+    let eisbn_cell = getCell(sheet, r, eisbn_column);
     // console.log("ISBN Cells: ",isbn_cell);
     var value = "";
 
@@ -439,74 +499,107 @@ export async function search_one_item(sheet, queries, r) {
         // // // console.log(isbn_res);
         
       }
-    }
-
-    if (value === "") {
-      if (title_cell) {
-        title_cell = format_title(title_cell);
-        let title_res = await search_by_title(title_cell);
-        if (title_res) {
-          if (title_res.length > 1) {
-            value = "Yellow: Multiple Matches Detected.";
-          } else {
-            value = "Yellow: Hollis ID No. " + title_res[0].hollisID;
+    }if(value === ""){
+      if (eisbn_cell) {
+        let eisbn_res = await search_by_eisbn(eisbn_cell);
+        // console.log("ISBN Search Result: ",isbn_res, " Of Length: ",isbn_res.length);
+        if (eisbn_res) {
+          if(eisbn_res.length == 1){
+            let hollcode = findHollis(eisbn_res[0]);
+            value = "Red: Hollis ID No. " + hollcode;
+            titles_found.push(getTitle(eisbn_res[0]));
+          }else if(eisbn_res.length > 1){
+            // let correct_Res = get_correct_one(isbn_cell,title_cell,author_cell, isbn_res);
+            // let hollcode = correct_Res.hollisID;
+            // let c = 0;
+            // for (var obj of isbn_res){
+            //   if(obj.check_identifier('isbn',isbn_cell)){
+            //     c+=1;
+            //   }
+            // }
+            
+            titles_found.push("---");
+              // // console.log("Many found");
+            value = "Yellow: Multiple Matches Found. ";
           }
+          // else if(isbn_res.length == 0){
+          //   value = "Green: No matches found.";
+          //   titles_found.push("---");
+          //   // // console.log("checking workflow here");
+          // }
+          // // // console.log(isbn_res);
+          
         }
       }
     }
 
-    if (value === "") {
-      if (author_cell) {
-        let author_res = await search_by_author(author_cell);
-        if (author_res) {
-          if (author_res.length > 1) {
-            value = "Yellow: Multiple Matches Detected.";
-          } else {
-            value = "Yellow: Hollis ID No. " + author_res[0].hollisID;
-          }
-        }
-      }
-    }
 
-    if (value === "") {
-      var valid_res = [];
-      for (var col of remaining_columns) {
-        let query_cell = getCell(sheet, r, col);
-        if (query_cell) {
-          let query_res = await search_by_query(query_cell);
-          if (query_res) {
-            if (query_res.length === 1) {
-              let g = query_res[0].asList();
-              let threshold = 3;
-              let row = rowAsList(sheet, r);
-              if (similarities(row, g) >= threshold) {
-                value = "Yellow: Possible Match Found with Hollis ID No." + query_res[0].hollisID;
-                continue;
-              }
-            } else if (query_res.length > 1) {
-              for (var res of query_res) {
-                let g = res.asList();
-                let threshold = 3;
-                let row = rowAsList(sheet, r);
-                if (similarities(row, g) >= threshold) {
-                  valid_res.push(res);
-                }
-              }
-            }
-          }
-        }
-      }
-      if (valid_res.length === 1) {
-        value = "Yellow: Possible Match Found with Hollis ID No." + valid_res[0].hollisID;
-      } else if (valid_res.length > 1) {
-        value = "Yellow: Multiple Potential Matches Found";
-      }
-    }
+    // if (value === "") {
+    //   if (title_cell) {
+    //     title_cell = format_title(title_cell);
+    //     let title_res = await search_by_title(title_cell);
+    //     if (title_res) {
+    //       if (title_res.length > 1) {
+    //         value = "Yellow: Multiple Matches Detected.";
+    //       } else {
+    //         value = "Yellow: Hollis ID No. " + title_res[0].hollisID;
+    //       }
+    //     }
+    //   }
+    // }
+
+    // if (value === "") {
+    //   if (author_cell) {
+    //     let author_res = await search_by_author(author_cell);
+    //     if (author_res) {
+    //       if (author_res.length > 1) {
+    //         value = "Yellow: Multiple Matches Detected.";
+    //       } else {
+    //         value = "Yellow: Hollis ID No. " + author_res[0].hollisID;
+    //       }
+    //     }
+    //   }
+    // }
+
+    // if (value === "") {
+    //   var valid_res = [];
+    //   for (var col of remaining_columns) {
+    //     let query_cell = getCell(sheet, r, col);
+    //     if (query_cell) {
+    //       let query_res = await search_by_query(query_cell);
+    //       if (query_res) {
+    //         if (query_res.length === 1) {
+    //           let g = query_res[0].asList();
+    //           let threshold = 3;
+    //           let row = rowAsList(sheet, r);
+    //           if (similarities(row, g) >= threshold) {
+    //             value = "Yellow: Possible Match Found with Hollis ID No." + query_res[0].hollisID;
+    //             continue;
+    //           }
+    //         } else if (query_res.length > 1) {
+    //           for (var res of query_res) {
+    //             let g = res.asList();
+    //             let threshold = 3;
+    //             let row = rowAsList(sheet, r);
+    //             if (similarities(row, g) >= threshold) {
+    //               valid_res.push(res);
+    //             }
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    //   if (valid_res.length === 1) {
+    //     value = "Yellow: Possible Match Found with Hollis ID No." + valid_res[0].hollisID;
+    //   } else if (valid_res.length > 1) {
+    //     value = "Yellow: Multiple Potential Matches Found";
+    //   }
+    // }
 
     if (value === "") {
       value = "Green: No matches found.";
     }
-    const valStr = isbn_cell + " " + title_cell + " "+author_cell;
+    const valStr = isbn_cell + " " + eisbn_cell;
     // if(value.includes("Green")){
     //   // // // // console.log("No match found for "+valStr);
     // }

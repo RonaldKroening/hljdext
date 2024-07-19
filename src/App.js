@@ -6,6 +6,7 @@ import SmallContainer from './components/small-container';
 import ChatboxContainer from './components/ChatboxContainer';
 import FileUpload from './components/FileUpload';
 import Popup from './Popup.js';
+import packageJson from '../package.json';
 import './App.css';
 import { Modal } from 'react-bootstrap';
 
@@ -51,9 +52,26 @@ function testMode(sheet, num_test) {
 }
 const test = false;
 const App = () => {
+  const { version } = packageJson;
+
   useEffect(() => {
-    document.title = 'HEXSUT';
-  }, []);
+    document.title = 'HJ Searching Utility';
+
+    const setFooterVersion = () => {
+      document.getElementById("versionFooter").innerHTML = `Version ${version}`;
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setFooterVersion);
+    } else {
+      setFooterVersion();
+    }
+
+    return () => {
+      document.removeEventListener('DOMContentLoaded', setFooterVersion);
+    };
+  }, [version]);
+
 
   const [sheet, setSheet] = useState(null);
   const [data, setData] = useState(null);
@@ -65,7 +83,7 @@ const App = () => {
   const [titleOfFile, setTOF] = useState("");
   const [workbook,setWorkbook] = useState(null);
   const [showPopup, setShowPopup] = useState(false); // State for showing the popup
-
+  
   const handleFileUpload = (files) => {
     const file = files[0];
     setfileInput(file);
@@ -144,7 +162,7 @@ const App = () => {
 
   return (
     <div className="App">
-      <h1>HEXSUT</h1>
+      <h1>HJ Searching Utility</h1>
       <LargeContainer id="large-container-1" text1="Upload File" text2="Click or Drag & Drop the Excel Spreadsheet to get started.">
         <FileUpload id="file-upload" onFilesSelected={handleFileUpload} />
       </LargeContainer>
@@ -152,7 +170,7 @@ const App = () => {
         <SmallContainer
           id="mini-container-1"
           cid="bcc"
-          title="ISBN/EISBN Column"
+          title="ISBN Column"
           options={columnNames}
           selectedOption={selectedColumns[0] || ''}
           onSelectChange={(value) => handleSelectChange(value, 0)}
@@ -160,30 +178,23 @@ const App = () => {
         <SmallContainer
           id="mini-container-2"
           cid="ttc"
-          title="Title Column"
+          title="EISBN Column"
           options={columnNames}
           selectedOption={selectedColumns[1] || ''}
           onSelectChange={(value) => handleSelectChange(value, 1)}
         />
-        <SmallContainer
-          id="mini-container-3"
-          cid="atc"
-          title="Author Column"
-          options={columnNames}
-          selectedOption={selectedColumns[2] || ''}
-          onSelectChange={(value) => handleSelectChange(value, 2)}
-        />
+        
       </LargeContainer>
-      <LargeContainer id="large-container-3" text1="Add Columns" text2="Check off other columns to be included in the search.">
+      {/* <LargeContainer id="large-container-3" text1="Add Columns" text2="Check off other columns to be included in the search.">
         <ChatboxContainer
           chatboxes={chatboxes}
           selectedColumns={selectedColumns}
           onCheckboxChange={handleCheckboxChange}
         />
-      </LargeContainer>
+      </LargeContainer> */}
       <button className="searchButton" onClick={segue}>Search</button>
       {showPopup && <Popup sheet={sheet} queries={queries} onClose={handleClosePopup} workbook={workbook} fileInput={fileInput} fname={titleOfFile}/>} {/* Conditionally render the popup */}
-      <footer>Version 1.1</footer>
+      <footer id="versionFooter">Version 1.1</footer>
     </div>
     
   );
