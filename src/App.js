@@ -183,7 +183,9 @@ const App = () => {
       </LargeContainer>
       <button className="searchButton" onClick={segue}>Search</button>
       {showPopup && <Popup sheet={sheet} queries={queries} onClose={handleClosePopup} workbook={workbook} fileInput={fileInput} fname={titleOfFile}/>} {/* Conditionally render the popup */}
+      <footer>Version 1.1</footer>
     </div>
+    
   );
 };
 
